@@ -48,7 +48,7 @@ def run_single(args):
     return (tiled_filepath, name)
 
 def write_json(tiled_files, out_dir):
-    out_filename = os.path.join(out_dir, 'decoden_input.json')
+    out_filename = os.path.join(out_dir, 'experiment_conditions.json')
     logger.info(f'Writing json file in {out_filename}')
     json_obj = {a[0]: a[1] for a in tiled_files}
     json.dump(json_obj, out_filename, indent=1)
