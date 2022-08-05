@@ -14,6 +14,11 @@ conda install -c bioconda macs2 bedops bedtools
 
 ## Usage
 
+### Preprocessing
+
+
+### Running DecoDen
+
 To run DecoDen, the data must be preprocessed into bedGraph format and binned correctly. The algorithm requires a small .json file that indicates the correspondance of each file to the experimental condition.
 
 ```javascript
