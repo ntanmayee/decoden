@@ -2,10 +2,8 @@
 
 ![DecoDen Schematic](utils/decoden_schematic.png "DecoDen")
 
-This is the accompanying code for the paper 
-``` 
-DecoDen:  Making sense of multi-histone ChIP-Seq
-``` 
+This is the accompanying code for the paper **DecoDen:  Making sense of multi-histone ChIP-Seq**.
+
 
 ## Dependencies
 DecoDen depends on MACS2, BEDOPS and BEDTools.
@@ -21,7 +19,9 @@ Pre-processing includes removing duplicate reads, extending reads and tiling the
 
 ```bash
 python run_preprocess.py -i "samples.csv" \ # CSV file with filepath and conditions
-                         -o "output_directory" # directory for preprocessed files
+                         -o "output_directory" \ # directory for preprocessed files
+                         -bs 200 \ # bin size for tiling (default 200)
+                         -n 2 \ # number of jobs for parallelization (default 2)
 ```
 The sample CSV file should contain `filepath`, `exp_name` and `is_control` columns. For an example look under `utils/samples.csv`. 
 
