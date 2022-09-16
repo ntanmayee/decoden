@@ -2,18 +2,20 @@ import argparse
 import subprocess
 import os
 import uuid
-from preprocess.logger import logger
+from preprocess.logger import logger 
+from pathlib import Path
 
 def filter_duplicate_reads(filename, out_dir, name):
     logger.info(f'Filtering duplicate reads for {filename}')
-    out_filepath = os.path.join(out_dir, name + '_filterdup.bed')
+
+    out_filepath = os.path.join(out_dir, 'data', os.path.splitext(os.path.basename(filename))[0] + '_filterdup.bed')
     logger.info(f'Filtered filepath will be {out_filepath}')
 
     subprocess.run(f"macs2 filterdup -i {filename} --keep-dup=1 -o {out_filepath}", shell=True)
     return out_filepath
 
 def extend_reads(filepath, extend_length, is_control=0):
-    logger.info(f'Extending duplicate reads for {filepath}')
+    logger.info(f'Extending reads for {filepath}')
     out_filepath = os.path.join(os.path.splitext(filepath)[0] + '_pileup.bdg')
     logger.info(f'Extended reads filepath will be {out_filepath}')
 
@@ -39,7 +41,7 @@ def get_fragment_length(filtered_filepath):
 
 def tile(extended_filepath, bin_size):
     logger.info(f'Tiling {extended_filepath} into bins of size {bin_size}')
-    out_filepath = f'{extended_filepath}_tiled.bed'
+    out_filepath = os.path.splitext(extended_filepath)[0]+ '_tiled.bed'
     name = str(uuid.uuid4())
 
     command = f'''sort-bed {extended_filepath} | awk -vOFS="\t" '{{ print $1, $2, $3, ".", $4 }}' - > signal_{name}.bed;'''
@@ -50,6 +52,7 @@ def tile(extended_filepath, bin_size):
 
     os.remove(f'signal_{name}.bed')
     os.remove(f'bins_{name}.bed')
+    os.remove(extended_filepath)
     logger.info(f'Tiled files in {out_filepath}')
     
     return out_filepath
