@@ -85,7 +85,7 @@ def run_HSR(wmat, bl_mask, conditions_list, eps=1e-20):
         treatment_transf = wmat.loc[:,treatment_cond].apply(lambda x: np.maximum(eps, x)).apply(np.log)
         
         fit_ixs = np.where((control_transf[bl_mask]>np.median(control_transf[bl_mask])) & (treatment_transf[bl_mask]>np.median(treatment_transf[bl_mask])))[0]
-        reg = LinearRegression(fit_intercept=False).fit(control_transf[bl_mask].values.reshape(-1,1), treatment_transf[bl_mask])
+        reg = LinearRegression(fit_intercept=False).fit(control_transf[bl_mask].values[fit_ixs].reshape(-1,1), treatment_transf[bl_mask][fit_ixs])
         
         log_pred = np.maximum(reg.predict(control_transf.values.reshape(-1,1)), np.log(0.5))
         pred = np.exp(log_pred)

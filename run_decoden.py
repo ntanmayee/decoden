@@ -82,6 +82,7 @@ def main(args):
 
     del data, data_noBL
 
+    # Perform HSR to remove multiplicative noise
     hsr_df = run_HSR(wmatrix, mask, conditions)
     hsr_df.reset_index().to_feather(join(args.output_folder, "HSR_results.ftr"))
     
