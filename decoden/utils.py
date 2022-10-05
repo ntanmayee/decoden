@@ -1,9 +1,11 @@
 import pandas as pd
 import os
 from tqdm import tqdm
-
+import numpy as np
 
 def get_blacklisted_regions_mask(df, bl_regions):
+    if len(bl_regions)<1:
+        return np.ones(len(df)).astype(bool)
     reg = bl_regions[bl_regions["seqnames"].isin(df.index.get_level_values("seqnames").unique())]
     filter_ixs = None
     index_start = df.index.get_level_values("start")

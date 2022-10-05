@@ -21,16 +21,18 @@ def main(args):
     with open(join(args.output_folder, "config.json"), "w") as f:
         json.dump(vars(args), f, indent=2)
 
-    bl_regions = pd.read_csv(args.blacklist_file, 
-                            sep="\t", header=None, names=["seqnames", "start", "end", "type"])
-
 
     # Load data
     conditions = args.conditions
     data, conditions_counts = load_files(files, args.data_folder, conditions)
 
-    # Filter BL regions 
-    mask = get_blacklisted_regions_mask(data, bl_regions)
+    # Filter BL regions
+    if args.blacklist_file is not None:
+        bl_regions = pd.read_csv(args.blacklist_file,
+                            sep="\t", header=None, names=["seqnames", "start", "end", "type"])
+        mask = get_blacklisted_regions_mask(data, bl_regions)
+    else:
+        mask = np.ones(len(data)).astype(bool)
     data_noBL = data[mask]
 
 
@@ -97,10 +99,10 @@ if __name__=="__main__":
     parser = ArgumentParser()
 
 
-    parser.add_argument("--data_folder", type=str, default="data/shallow_e114_200bp_bedGraph_files/")
-    parser.add_argument("--output_folder", type=str, default="outputs/shallow_e114_200bp_results")
-    parser.add_argument("--files_reference", type=str, default="data/shallow_e114_200bp_bedGraph_files/sample_files.json")
-    parser.add_argument("--blacklist_file", type=str, default="data/annotations/hg19-blacklist.v2.bed")
+    parser.add_argument("--data_folder", type=str, default="../DecoDen_GV/data/shallow_e114_200bp_bedGraph_files/")
+    parser.add_argument("--output_folder", type=str, default="../DecoDen_GV/outputs/shallow_e114_200bp_results_centering")
+    parser.add_argument("--files_reference", type=str, default="../DecoDen_GV/data/shallow_e114_200bp_bedGraph_files/sample_files.json")
+    parser.add_argument("--blacklist_file", type=str, default="../DecoDen_GV/data/annotations/hg19-blacklist.v2.bed")
 
     # First experimental condition should always correspond to the control/input samples
     parser.add_argument("--conditions", type=str, nargs="+", default=["control", "H3K27me3", "H3K4me3"])
