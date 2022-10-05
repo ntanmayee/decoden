@@ -57,7 +57,7 @@ def run_single(args):
 def write_json(tiled_files, out_dir):
     out_filename = os.path.join(out_dir, 'experiment_conditions.json')
     logger.info(f'Writing json file in {out_filename}')
-    json_obj = {os.path.join('data', os.path.basename(a[0])): a[1] for a in tiled_files}
+    json_obj = {os.path.join(out_dir, 'data', os.path.basename(a[0])): a[1] for a in tiled_files}
     json.dump(json_obj, open(out_filename, 'w'), indent=1)
 
 def run(input_csv, bin_size, num_jobs, out_dir):

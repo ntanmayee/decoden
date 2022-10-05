@@ -26,7 +26,7 @@ if __name__ == '__main__':
     # arguments for preprocessing
     parser.add_argument('-i', "--input_csv", required=True)
     parser.add_argument('-bs', "--bin_size", default=200, type=int)
-    parser.add_argument('-n', "--num_jobs", default=2, type=int)
+    parser.add_argument('-n', "--num_jobs", default=1, type=int)
     parser.add_argument('-o', "--out_dir", required=True)
 
     # arguments from decoden
@@ -39,7 +39,6 @@ if __name__ == '__main__':
     parser.add_argument("--alpha_W", type=float, default=0.01)
     parser.add_argument("--alpha_H", type=float, default=0.001)
     
-    logger.info('Parsing arguments...')
     args = parser.parse_args()
     
     logger.info('Checking for output directory...')
@@ -49,10 +48,10 @@ if __name__ == '__main__':
     
     logger.info("Running decoden...")
     decoden_args = Namespace(
-        data_folder=os.path.join(args.out_dir, 'data'),
+        data_folder=os.path.join(args.out_dir),
         output_folder=args.out_dir,
         files_reference=os.path.join(args.out_dir, 'experiment_conditions.json'),
-        blacklist_file=args.blacklisr_file,
+        blacklist_file=args.blacklist_file,
         conditions=extract_conditions(os.path.join(args.out_dir, 'experiment_conditions.json')),
         control_cov_threshold=args.control_cov_threshold,
         n_train_bins=args.n_train_bins,

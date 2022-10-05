@@ -2,3 +2,5 @@
 __pycache_
 .ipynb_checkpoints/
 hg19-blacklist.v2.bed
+data/
+ipynb/
