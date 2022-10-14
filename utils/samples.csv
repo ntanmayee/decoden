@@ -1,3 +1,11 @@
 filepath,exp_name,is_control
-/cluster/gs_lab/tnarendra001/macs_pval/bam/e114_encode/e114_encode_h3k4me3_1_sfilt.bam,e114_encode_h3k4me3_1,0
-/cluster/gs_lab/tnarendra001/macs_pval/bam/e114_encode/e114_encode_h3k4me3_control_1_sfilt.bam,e114_encode_h3k4me3_control_1,1
+wce/ENCFF234NNJ.bam,control,1
+wce/ENCFF346JZT.bam,control,1
+h3k4me3/ENCFF404DOT.bam,h3k4me3,0
+h3k4me3/ENCFF779XRN.bam,h3k4me3,0
+h3k36me3/ENCFF571WYJ.bam,h3k36me3,0
+h3k36me3/ENCFF949VKE.bam,h3k36me3,0
+h3k27me3/ENCFF623DRR.bam,h3k27me3,0
+h3k27me3/ENCFF228ABC.bam,h3k27me3,0
+h3k4me1/ENCFF061TSZ.bam,h3k4me1,0
+h3k4me1/ENCFF065HVY.bam,h3k4me1,0
