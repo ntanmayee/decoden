@@ -7,20 +7,25 @@ from preprocess.logger import logger
 from run_preprocess import run
 from run_decoden import main
 
+def print_message():
+    with open('utils/message.txt') as fp:
+        print(fp.read())
+
 def extract_conditions(json_file):
     json_object = json.load(open(json_file))
-    conditions = list(set(json_object.values()))
-    conditions = [a.lower() for a in conditions]
-
-    assert "control" in conditions
-    conditions
-    conditions.remove('control')
-    conditions = ['control'] + conditions
-
+    
+    conditions = []
+    for key in json_object:
+        value = json_object[key]
+        if value not in conditions:
+            conditions.append(value)
+    logger.info(conditions)
     return conditions 
 
 
 if __name__ == '__main__':
+    print_message()
+    
     parser = argparse.ArgumentParser()
 
     # arguments for preprocessing
