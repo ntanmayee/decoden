@@ -1,8 +1,8 @@
-# DecoDen:  Making sense of multi-histone ChIP-Seq
+# Multi-histone ChIP-Seq Analysis with DecoDen
 
 ![DecoDen Schematic](utils/decoden_schematic.png "DecoDen")
 
-This is the accompanying code for the paper **DecoDen:  Making sense of multi-histone ChIP-Seq**.
+This is the accompanying code for the paper **Multi-histone ChIP-Seq Analysis with DecoDen**.
 
 
 ## Dependencies
@@ -13,6 +13,27 @@ conda install -c bioconda macs2 bedops bedtools
 ```
 
 ## Usage
+
+### Quick Start
+#### Prepare data
+DecoDen expects aligned reads in BED/BAM format. Create a CSV file with details about samples. The sample CSV file should contain `filepath`, `exp_name` and `is_control` columns. For an example look under `utils/samples.csv`. 
+
+#### Running DecoDen
+Run DecoDen with the following command
+```bash
+python run.py -i samples.csv -o results_dir \ # output directory
+                             --n_train_bins 4000 \ # number of training genomic bins
+                             --control_cov_threshold 0.1 \ # threshold with control coverage. use a value > (1/bin_size)
+                             --chunk_size 100 \ # For the processing of the signal matrix
+                             -bs 15 \ # genomic bin size. Choose between 15-200. Smaller values increase run time.
+```
+
+To know details about all possible input parameters, run
+```bash
+python run.py --help
+```
+
+If you would prefer to run preprocessing and DecoDen separately, use the following commands.
 
 ### Preprocessing
 Pre-processing includes removing duplicate reads, extending reads and tiling the data into bins. These steps require MACS2, BEDOPS and BEDTools.
@@ -45,7 +66,7 @@ To run DecoDen, the data must be preprocessed into bedGraph format and binned co
 ```
 
 To run DecoDen, an example command would be:
-```
+```bash
 python run_decoden --data_folder "data/my_experiment" \ # where the .bdg files are saved
                    --output_folder "outputs/my_experiment_results" \ # where to save the results
                    --files_reference "data/my_experiment_files.json" \ # the aforementioned mapping
