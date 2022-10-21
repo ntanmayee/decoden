@@ -3,9 +3,17 @@ import pandas as pd
 from tqdm.notebook import tqdm
 from collections import namedtuple
 import os
-import csv                                # Import csv
+import csv                                
 
 def preprocess_bedgraph(fname, bin_size=25, output_fname=None, output_dir=None):
+    """Preprocess tiled bedgraph files
+
+    Args:
+        fname (string): path to input file
+        bin_size (int, optional): width of genomic bin. Defaults to 25.
+        output_fname (string, optional): name of the output file. Defaults to None.
+        output_dir (string, optional): path to output directory. Defaults to None.
+    """
     with open(fname, 'r') as fp:
         for count, line in enumerate(fp):
             pass

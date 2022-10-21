@@ -4,14 +4,20 @@ from pathlib import Path
 import json
 import os
 from preprocess.logger import logger
+from decoden.utils import print_message
 from run_preprocess import run
 from run_decoden import main
 
-def print_message():
-    with open('utils/message.txt') as fp:
-        print(fp.read())
 
 def extract_conditions(json_file):
+    """Extract list of different experimental conditions, to pass to run_decoden.py. Assumes that `control` is the first condition.
+
+    Args:
+        json_file (string): path to `experiment_conditions.json` generated from run_preprocess.py
+
+    Returns:
+        list: list of different experimental conditions
+    """
     json_object = json.load(open(json_file))
     
     conditions = []
@@ -29,20 +35,20 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     # arguments for preprocessing
-    parser.add_argument('-i', "--input_csv", required=True)
-    parser.add_argument('-bs', "--bin_size", default=200, type=int)
-    parser.add_argument('-n', "--num_jobs", default=1, type=int)
-    parser.add_argument('-o', "--out_dir", required=True)
+    parser.add_argument('-i', "--input_csv", required=True, help='path to CSV file with information about experimental conditions. Must contain `filepath`, `exp_name` and `is_control` columns. Control/input should be the first condition. Input files can be in BED/BAM format.')
+    parser.add_argument('-bs', "--bin_size", default=200, type=int, help='size of genomic bin for tiling. Recommended value is 10-200. Smaller bin size increases space and runtime, larger binsizes may occlude small variations. Default: 200')
+    parser.add_argument('-n', "--num_jobs", default=1, type=int, help='Number of parallel jobs for preprocessing. Default: 1')
+    parser.add_argument('-o', "--out_dir", required=True, help='path to directory where all output files will be written')
 
     # arguments from decoden
-    parser.add_argument('-bl', "--blacklist_file")
-    parser.add_argument("--control_cov_threshold", type=float, default=1.0)
-    parser.add_argument("--n_train_bins", type=int, default=300000)
-    parser.add_argument("--chunk_size", type=int, default=100000)
-    parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument('-bl', "--blacklist_file", help='path to blacklist file')
+    parser.add_argument("--control_cov_threshold", type=float, default=1.0, help='Threshold for coverage in control samples. Only genomic bins above this threshold will be used. It is recommended to choose a value larger than 1/bin_size.')
+    parser.add_argument("--n_train_bins", type=int, default=300000, help='Number of genomic bins to be used for training')
+    parser.add_argument("--chunk_size", type=int, default=100000, help='Chunk size for processing the signal matrix. Should be smaller than `n_train_bins`')
+    parser.add_argument("--seed", type=int, default=42, help='Random state for reproducability')
 
-    parser.add_argument("--alpha_W", type=float, default=0.01)
-    parser.add_argument("--alpha_H", type=float, default=0.001)
+    parser.add_argument("--alpha_W", type=float, default=0.01, help='Regularisation for the signal matrix')
+    parser.add_argument("--alpha_H", type=float, default=0.001, help='Regularisation for the mixing matrix')
     
     args = parser.parse_args()
     

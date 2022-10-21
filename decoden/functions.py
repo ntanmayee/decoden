@@ -7,7 +7,21 @@ from tqdm import tqdm
 
 def extract_mixing_matrix(data_df, conditions_list, conditions_counts_ref, alpha_W=0.01, alpha_H=0.001,
                           control_cov_threshold=1.0, n_train_bins=300000, seed=42):
+    """Extract mixing matrix in the NMF step of DecoDen
 
+    Args:
+        data_df (np.array): Data matrix of all samples and conditions
+        conditions_list (list): List of different experimental conditions
+        conditions_counts_ref (list): Counts of different conditions
+        alpha_W (float, optional): Regularisation for the signal matrix. Defaults to 0.01.
+        alpha_H (float, optional): Regularisation for the mixing matrix. Defaults to 0.001.
+        control_cov_threshold (float, optional): Minimum coverage for the training data for the NMF. Defaults to 1.0.
+        n_train_bins (int, optional): Number of training bins for the extraction of the mixing matrix. Defaults to 300000.
+        seed (int, optional): Random state for reproductibility. Defaults to 42.
+
+    Returns:
+        numpy.array: Mixing matrix from NMF
+    """
     # Filter data to have sufficient control coverage
     dsel = data_df[(data_df[[c for c in data_df.columns if c.startswith(
         conditions_list[0])]] > control_cov_threshold).any(axis=1)]
@@ -64,6 +78,19 @@ def extract_mixing_matrix(data_df, conditions_list, conditions_counts_ref, alpha
 
 
 def extract_signal(data_df, mmatrix, conditions_list, chunk_size=100000, alpha_W=0.01, seed=42):
+    """Use the mixing matrix to extract the signals. Can be done in chunks to fit in memory
+
+    Args:
+        data_df (np.array): Data matrix of all samples and conditions
+        mmatrix (np.array): Mixing matrix
+        conditions_list (list): List of different experimental conditions
+        chunk_size (int, optional): Number of genomic bins to process in one chunk. Defaults to 100000.
+        alpha_W (float, optional): Regularisation for the signal matrix. Defaults to 0.01.
+        seed (int, optional): Random state for reproductibility. Defaults to 42.
+
+    Returns:
+        np.array: signal matrix from NMF
+    """
     # Use the mixing matrix to extract the signals. Can be done in chunks to fit in memory
     processed_W = []
     for ck in tqdm(np.split(data_df.values, range(chunk_size, len(data_df)+chunk_size, chunk_size))):
@@ -83,6 +110,14 @@ def extract_signal(data_df, mmatrix, conditions_list, chunk_size=100000, alpha_W
 
 
 def run_HSR(wmat, bl_mask, conditions_list, eps=1e-20):
+    """Run HSR step of DecoDen
+
+    Args:
+        wmat (np.array): signal matrix from NMF step
+        bl_mask (np.array): mask of genomic bins that belong to blacklist regions
+        conditions_list (list): list of experimental conditions
+        eps (_type_, optional): minimum value threshold. Defaults to 1e-20.
+    """
     control_condition = conditions_list[0]
     out_df = wmat.loc[:, []]
 
@@ -97,8 +132,8 @@ def run_HSR(wmat, bl_mask, conditions_list, eps=1e-20):
             lambda x: np.maximum(eps, x)).apply(np.log)
         mean_treatment_transf = np.mean(treatment_transf)
 #         treatment_transf -= mean_treatment_transf
-#         fit_ixs = np.where((control_transf[bl_mask] > np.median(control_transf[bl_mask])) & (
-#             treatment_transf[bl_mask] > np.median(treatment_transf[bl_mask])))[0]
+        fit_ixs = np.where((control_transf[bl_mask] > np.median(control_transf[bl_mask])) & (
+            treatment_transf[bl_mask] > np.median(treatment_transf[bl_mask])))[0]
         reg = LinearRegression(fit_intercept=False).fit(
             control_transf[bl_mask].values[fit_ixs].reshape(-1, 1), treatment_transf[bl_mask][fit_ixs])
 

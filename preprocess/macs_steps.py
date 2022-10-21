@@ -1,3 +1,6 @@
+"""Module to run different preprocessing steps
+"""
+
 import argparse
 import subprocess
 import os
@@ -6,6 +9,16 @@ from preprocess.logger import logger
 from pathlib import Path
 
 def filter_duplicate_reads(filename, out_dir, name):
+    """Filter duplicate reads for all samples. Internally uses `macs2 filterdup`.
+
+    Args:
+        filename (string): path to input file
+        out_dir (string): path to output directory
+        name (string): argument not used (deprecated)
+
+    Returns:
+        _type_: _description_
+    """
     logger.info(f'Filtering duplicate reads for {filename}')
 
     out_filepath = os.path.join(out_dir, 'data', os.path.splitext(os.path.basename(filename))[0] + '_filterdup.bed')
@@ -15,6 +28,16 @@ def filter_duplicate_reads(filename, out_dir, name):
     return out_filepath
 
 def extend_reads(filepath, extend_length, is_control=0):
+    """Extend reads to estimated fragment length. Internally uses `macs2 pileup`.
+
+    Args:
+        filepath (string): path to file
+        extend_length (int): estimated fragment length
+        is_control (int, optional): if control sample, reads will be extended in both directions. Otherwise, reads are extended from 5' to 3' only. Defaults to 0.
+
+    Returns:
+        string: path to output file with extended reads
+    """
     logger.info(f'Extending reads for {filepath}')
     out_filepath = os.path.join(os.path.splitext(filepath)[0] + '_pileup.bdg')
     logger.info(f'Extended reads filepath will be {out_filepath}')
@@ -29,6 +52,17 @@ def extend_reads(filepath, extend_length, is_control=0):
     return out_filepath
 
 def get_fragment_length(filtered_filepath):
+    """Estimate fragment length. Internally uses `macs2 predictd`.
+
+    Args:
+        filtered_filepath (string): path to file with filtered reads
+
+    Raises:
+        Exception: Unable to compute fragment length
+
+    Returns:
+        int: estimated fragment length
+    """
     logger.info(f'Getting fragment length for {filtered_filepath}')
 
     result = subprocess.run(f'macs2 predictd -i {filtered_filepath} -g hs -m 5 50', capture_output=True, text=True, shell=True)
@@ -40,6 +74,15 @@ def get_fragment_length(filtered_filepath):
     return fragment_length
 
 def tile(extended_filepath, bin_size):
+    """Tile file into bins. Internally uses BEDOPS.
+
+    Args:
+        extended_filepath (string): path to file with extended reads
+        bin_size (int): width of genomic bin. Recommended to choose from 10-200. 
+
+    Returns:
+        string: path to output file
+    """
     logger.info(f'Tiling {extended_filepath} into bins of size {bin_size}')
     out_filepath = os.path.splitext(extended_filepath)[0]+ '_tiled.bed'
     name = str(uuid.uuid4())
@@ -58,6 +101,18 @@ def tile(extended_filepath, bin_size):
     return out_filepath
 
 def run_pipeline(input_filepath, name, out_dir, is_control, bin_size):
+    """Run all preprocessing steps for single sample
+
+    Args:
+        input_filepath (string): path to input file
+        name (string): unique name for sample
+        out_dir (string): path to output directory
+        is_control (bool): indicator if control/input sample or treatment sample
+        bin_size (int): width of genomic bin
+
+    Returns:
+        string: path to preprocssed file
+    """
     logger.info(f'Running preprocessing pipeline for {input_filepath}')
 
     filterdup_filepath = filter_duplicate_reads(input_filepath, out_dir, name)

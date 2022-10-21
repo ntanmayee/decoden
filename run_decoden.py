@@ -1,18 +1,26 @@
+"""This module runs the DecoDen pipeline
+"""
+
 import pandas as pd
 import numpy as np
 import json
-# import yaml
 from argparse import ArgumentParser
 import os
 from os.path import join, exists
 from tqdm import tqdm
-from decoden.utils import get_blacklisted_regions_mask, load_files
+from decoden.utils import get_blacklisted_regions_mask, load_files, print_message
 from decoden.functions import extract_mixing_matrix, extract_signal, run_HSR
 
 import matplotlib.pyplot as plt
 import seaborn as sns
 
 def main(args):
+    """`main` function that runs the internal pipeline for DecoDen
+
+    Args:
+        args : arguments from ArgumentParser
+    """
+
     with open(args.files_reference, "r") as f:
         files = json.load(f)
     if not exists(args.output_folder):
@@ -88,7 +96,6 @@ def main(args):
     hsr_df = run_HSR(wmatrix, mask, conditions)
     hsr_df.reset_index().to_feather(join(args.output_folder, "HSR_results.ftr"))
     
-
     print("DecoDen complete!")
 
 
@@ -96,27 +103,25 @@ def main(args):
 
 
 if __name__=="__main__":
+    print_message()
+
     parser = ArgumentParser()
 
-
-    parser.add_argument("--data_folder", type=str, default="../DecoDen_GV/data/shallow_e114_200bp_bedGraph_files/")
-    parser.add_argument("--output_folder", type=str, default="../DecoDen_GV/outputs/shallow_e114_200bp_results_centering")
-    parser.add_argument("--files_reference", type=str, default="../DecoDen_GV/data/shallow_e114_200bp_bedGraph_files/sample_files.json")
-    parser.add_argument("--blacklist_file", type=str, default="../DecoDen_GV/data/annotations/hg19-blacklist.v2.bed")
+    parser.add_argument("--data_folder", type=str, default="../DecoDen_GV/data/shallow_e114_200bp_bedGraph_files/", help="path to preprocessed data files in BED format")
+    parser.add_argument("--output_folder", type=str, default="../DecoDen_GV/outputs/shallow_e114_200bp_results_centering", help='path to output directory')
+    parser.add_argument("--files_reference", type=str, default="../DecoDen_GV/data/shallow_e114_200bp_bedGraph_files/sample_files.json", help='path to JSON file with experiment conditions. If you used DecoDen for pre-processing, use the `experiment_conditions.json` file')
+    parser.add_argument("--blacklist_file", type=str, default="../DecoDen_GV/data/annotations/hg19-blacklist.v2.bed", help='path to blacklist file. Make sure to use the blacklist that is appropriate for the genome assembly/organism.')
 
     # First experimental condition should always correspond to the control/input samples
-    parser.add_argument("--conditions", type=str, nargs="+", default=["control", "H3K27me3", "H3K4me3"])
+    parser.add_argument("--conditions", type=str, nargs="+", default=["control", "H3K27me3", "H3K4me3"], help='list of experimental conditions. First condition MUST correspond to the control/input samples, otherwise DecoDen will not work correctly.')
 
-    parser.add_argument("--control_cov_threshold", type=float, default=1.0)
-    parser.add_argument("--n_train_bins", type=int, default=300000)
-    parser.add_argument("--chunk_size", type=int, default=100000)
-    parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--control_cov_threshold", type=float, default=1.0, help='Threshold for coverage in control samples. Only genomic bins above this threshold will be used. It is recommended to choose a value larger than 1/bin_size.')
+    parser.add_argument("--n_train_bins", type=int, default=300000, help='Number of genomic bins to be used for training')
+    parser.add_argument("--chunk_size", type=int, default=100000, help='Chunk size for processing the signal matrix. Should be smaller than `n_train_bins`')
+    parser.add_argument("--seed", type=int, default=42, help='Random state for reproducability')
 
-    parser.add_argument("--alpha_W", type=float, default=0.01)
-    parser.add_argument("--alpha_H", type=float, default=0.001)
-
-
-
+    parser.add_argument("--alpha_W", type=float, default=0.01, help='Regularisation for the signal matrix')
+    parser.add_argument("--alpha_H", type=float, default=0.001, help='Regularisation for the mixing matrix')
 
     args = parser.parse_args()
     main(args)

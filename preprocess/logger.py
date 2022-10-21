@@ -1,3 +1,6 @@
+"""Module to print logging messages
+"""
+
 import logging
 
 logger = logging.getLogger(__name__)
