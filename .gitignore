@@ -4,3 +4,7 @@ __pycache_
 hg19-blacklist.v2.bed
 data/
 ipynb/
+*.bdg
+qsub_outs/
+rerun.py
+run.sh

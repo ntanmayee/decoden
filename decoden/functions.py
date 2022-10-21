@@ -89,23 +89,24 @@ def run_HSR(wmat, bl_mask, conditions_list, eps=1e-20):
     control_transf = wmat.loc[:, control_condition].apply(
         lambda x: np.maximum(eps, x)).apply(np.log)
 
-    control_transf -= np.mean(control_transf)
+#     control_transf -= np.mean(control_transf)
 
     for i, treatment_cond in tqdm(enumerate(conditions_list[1:])):
         # Select only values above the median for the fit, to reduce the contribution of noise
         treatment_transf = wmat.loc[:, treatment_cond].apply(
             lambda x: np.maximum(eps, x)).apply(np.log)
         mean_treatment_transf = np.mean(treatment_transf)
-        treatment_transf -= mean_treatment_transf
-        fit_ixs = np.where((control_transf[bl_mask] > np.median(control_transf[bl_mask])) & (
-            treatment_transf[bl_mask] > np.median(treatment_transf[bl_mask])))[0]
+#         treatment_transf -= mean_treatment_transf
+#         fit_ixs = np.where((control_transf[bl_mask] > np.median(control_transf[bl_mask])) & (
+#             treatment_transf[bl_mask] > np.median(treatment_transf[bl_mask])))[0]
         reg = LinearRegression(fit_intercept=False).fit(
             control_transf[bl_mask].values[fit_ixs].reshape(-1, 1), treatment_transf[bl_mask][fit_ixs])
 
         log_pred = np.maximum(reg.predict(
             control_transf.values.reshape(-1, 1)), np.log(0.5))
         pred = np.exp(log_pred)
-        track = np.exp(treatment_transf+mean_treatment_transf-log_pred)
+#         track = np.exp(treatment_transf+mean_treatment_transf-log_pred)
+        track = np.exp(treatment_transf-log_pred)
         out_df[treatment_cond+" HSR Value"] = track
         out_df[treatment_cond+" fit"] = pred
 

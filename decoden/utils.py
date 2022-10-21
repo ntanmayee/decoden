@@ -27,7 +27,7 @@ def load_files(files_ref, data_folder, sample_conditions):
     for fname, c in tqdm(files_ref.items()):
         conditions_counts[c] += 1    
         colname = c+"_"+str(conditions_counts[c])
-        df = pd.read_csv(os.path.join(data_folder, fname), sep="\t", names=["seqnames", "start", "end", colname])
+         df = pd.read_csv(os.path.join(data_folder, fname), sep="\t", names=["seqnames", "start", "end", colname])
         df.set_index(["seqnames", "start", "end"], inplace=True)
         if data is None:
             data = df
