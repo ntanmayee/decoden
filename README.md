@@ -2,36 +2,51 @@
 
 ![DecoDen Schematic](utils/decoden_schematic.png "DecoDen")
 
-This is the accompanying code for the paper **Multi-histone ChIP-Seq Analysis with DecoDen**.
+DecoDen uses replicates and multi-histone ChIP-Seq experiments for a fixed cell type to learn and remove shared biases from fragmentation, PCR amplification and seqeunce mappability. 
+
+Details about DecoDen are in the paper **Multi-histone ChIP-Seq Analysis with DecoDen**.
 
 
 ## Dependencies
-DecoDen depends on MACS2, BEDOPS and BEDTools.
-
+DecoDen depends on MACS2, BEDOPS and BEDTools for data pre-processing.
 ```sh
 conda install -c bioconda macs2 bedops bedtools
 ```
 
-## Usage
+## Quick Start
+### Prepare data
+Create a CSV file with details about samples. DecoDen expects aligned reads in BED/BAM format.  The sample CSV file must contain `filepath`, `exp_name` and `is_control` columns. For an example look under [`utils/samples.csv`](https://github.com/ntanmayee/DecoDen/blob/main/utils/samples.csv). 
 
-### Quick Start
-#### Prepare data
-DecoDen expects aligned reads in BED/BAM format. Create a CSV file with details about samples. The sample CSV file should contain `filepath`, `exp_name` and `is_control` columns. For an example look under `utils/samples.csv`. 
+### Running DecoDen
+Run DecoDen with the following command. 
 
-#### Running DecoDen
-Run DecoDen with the following command
 ```bash
-python run.py -i samples.csv -o results_dir \ # output directory
-                             --n_train_bins 4000 \ # number of training genomic bins
-                             --control_cov_threshold 0.1 \ # threshold with control coverage. use a value > (1/bin_size)
-                             --chunk_size 100 \ # For the processing of the signal matrix
-                             -bs 15 \ # genomic bin size. Choose between 15-200. Smaller values increase run time.
+python run.py -i samples.csv -o results_dir
 ```
 
-To know details about all possible input parameters, run
-```bash
-python run.py --help
+The output from DecoDen will be written into `HSR_results.ftr` in the output directory. To inspect results - 
+
+```python
+import pandas as pd
+hsr_results = pd.read_feather('HSR_results.ftr')
 ```
+
+#### List of options
+| Parameter | Description |
+|---|---|
+| `-i INPUT_CSV, --input_csv` | path to CSV file with information about experimental conditions. Must contain `filepath`, `exp_name` and `is_control` columns. Control/input should be the first condition. Input files can be in BED/BAM format. |
+| `-bs BIN_SIZE, --bin_size BIN_SIZE` | size of genomic bin for tiling. Recommended value is 10-200. Smaller bin size increases space and runtime, larger binsizes may occlude small variations. Default: 200 |
+| `-n NUM_JOBS, --num_jobs NUM_JOBS` | Number of parallel jobs for preprocessing. Default: 1 |
+| `-o OUT_DIR, --out_dir OUT_DIR` | path to directory where all output files will be written |
+| `-bl BLACKLIST_FILE, --blacklist_file BLACKLIST_FILE` | path to blacklist file |
+| `--control_cov_threshold CONTROL_COV_THRESHOLD` | Threshold for coverage in control samples. Only genomic bins above this threshold will be used. It is recommended to choose a value larger than 1/bin_size. |
+| `--n_train_bins N_TRAIN_BINS` | Number of genomic bins to be used for training |
+| `--chunk_size CHUNK_SIZE` | Chunk size for processing the signal matrix. Should be smaller than `n_train_bins` |
+| `--seed SEED` | Random state for reproducability |
+| `--alpha_W ALPHA_W` | Regularisation for the signal matrix |
+| `--alpha_H ALPHA_H` | Regularisation for the mixing matrix |
+
+## Running DecoDen
 
 If you would prefer to run preprocessing and DecoDen separately, use the following commands.
 
@@ -42,9 +57,9 @@ Pre-processing includes removing duplicate reads, extending reads and tiling the
 python run_preprocess.py -i "samples.csv" \ # CSV file with filepath and conditions
                          -o "output_directory" \ # directory for preprocessed files
                          -bs 200 \ # bin size for tiling (default 200)
-                         -n 2 \ # number of jobs for parallelization (default 2)
+                         -n 2 \ # number of jobs for parallelization (default 1)
 ```
-The sample CSV file should contain `filepath`, `exp_name` and `is_control` columns. For an example look under `utils/samples.csv`. 
+The sample CSV file should contain `filepath`, `exp_name` and `is_control` columns. For an example look under `utils/samples.csv`. Preprocessed data will be written to `data` folder in the output directory.
 
 ### Running DecoDen
 
@@ -80,3 +95,8 @@ python run_decoden --data_folder "data/my_experiment" \ # where the .bdg files a
                    --alpha_H 0.001 \ # Regularisation for the mixing matrix
 
 ```
+
+Results are written to `HSR_results.ftr` in the output directory. NMF signal matrix and mixing matrix are in `NMF`. For a sanity check, you can inspect the figures `mixing_matrix.pdf` and `signal_matrix_sample.pdf`. 
+
+## Bug Reports and Suggestions for Improvement
+Please [raise an issue](https://github.com/ntanmayee/DecoDen/issues/new) if you find bugs or if you have any suggestions for improvement.
