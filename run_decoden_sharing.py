@@ -9,7 +9,7 @@ import os
 from os.path import join, exists
 from tqdm import tqdm
 from decoden.utils import get_blacklisted_regions_mask, load_files, print_message
-from decoden.functions import extract_mixing_matrix, extract_signal, run_HSR
+from decoden.functions import extract_mixing_matrix_, extract_signal, run_HSR
 
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -93,10 +93,8 @@ def main(args):
     del data, data_noBL
 
     # Perform HSR to remove multiplicative noise
-
-
-    # hsr_df = run_HSR(wmatrix, mask, conditions)
-    # hsr_df.reset_index().to_feather(join(args.output_folder, "HSR_results.ftr"))
+    hsr_df = run_HSR(wmatrix, mask, conditions)
+    hsr_df.reset_index().to_feather(join(args.output_folder, "HSR_results.ftr"))
     
     print("DecoDen complete!")
 
@@ -110,7 +108,7 @@ if __name__=="__main__":
     parser = ArgumentParser()
 
     parser.add_argument("--data_folder", type=str, default="../DecoDen_GV/data/shallow_e114_200bp_bedGraph_files/", help="path to preprocessed data files in BED format")
-    parser.add_argument("--output_folder", type=str, default="../DecoDen_GV/outputs/replicates_HSR", help='path to output directory')
+    parser.add_argument("--output_folder", type=str, default="../DecoDen_GV/outputs/shallow_e114_200bp_results_centering", help='path to output directory')
     parser.add_argument("--files_reference", type=str, default="../DecoDen_GV/data/shallow_e114_200bp_bedGraph_files/sample_files.json", help='path to JSON file with experiment conditions. If you used DecoDen for pre-processing, use the `experiment_conditions.json` file')
     parser.add_argument("--blacklist_file", type=str, default="../DecoDen_GV/data/annotations/hg19-blacklist.v2.bed", help='path to blacklist file. Make sure to use the blacklist that is appropriate for the genome assembly/organism.')
 

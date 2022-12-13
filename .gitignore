@@ -8,3 +8,4 @@ ipynb/
 qsub_outs/
 rerun.py
 run.sh
+devel/
