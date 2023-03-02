@@ -1,4 +1,4 @@
-# Multi-histone ChIP-Seq Analysis with DecoDen
+# Multi-condition ChIP-Seq Analysis with DecoDen
 [![DOI:10.1101/2022.10.18.512665](https://img.shields.io/badge/DOI-10.1101/2022.10.18.512665-B31B1B.svg)](https://doi.org/10.1101/2022.10.18.512665)
 ![GPLv3 license](https://img.shields.io/github/license/ntanmayee/DecoDen)
 
