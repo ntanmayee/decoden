@@ -12,7 +12,7 @@ Details about DecoDen are in the paper [**Multi-histone ChIP-Seq Analysis with D
 ## Dependencies
 DecoDen depends on MACS2, BEDOPS and BEDTools for data pre-processing.
 ```sh
-conda install -c bioconda macs2 bedops bedtools
+conda install -c bioconda macs2 bedops bedtools pandas tqdm joblib scikit-learn matplotlib seaborn
 ```
 
 ## Quick Start
