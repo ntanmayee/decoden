@@ -3,6 +3,7 @@ import numpy as np
 from sklearn.decomposition import NMF, non_negative_factorization
 from sklearn.linear_model import LinearRegression
 from tqdm import tqdm
+import warnings
 
 
 def extract_mixing_matrix(data_df, conditions_list, conditions_counts_ref, alpha_W=0.01, alpha_H=0.001,
@@ -209,6 +210,11 @@ def run_HSR(wmat, bl_mask, conditions_list, eps=1e-20):
             lambda x: np.maximum(eps, x)).apply(np.log)
         mean_treatment_transf = np.mean(treatment_transf)
 #         treatment_transf -= mean_treatment_transf
+
+        # print warning message if median is too low
+        if (np.median(treatment_transf[bl_mask]) < 1) or (np.median(treatment_transf[bl_mask]) < 1):
+            warnings.warn("Treatment/Control coverage might be too low for half-sibling regression to be effective!")
+
         fit_ixs = np.where((control_transf[bl_mask] > np.median(control_transf[bl_mask])) & (
             treatment_transf[bl_mask] > np.median(treatment_transf[bl_mask])))[0]
         reg = LinearRegression(fit_intercept=False).fit(

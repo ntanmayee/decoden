@@ -2,11 +2,13 @@ import pandas as pd
 import os
 from tqdm import tqdm
 import numpy as np
+from pathlib import Path
 
 def print_message():
     """Print cool opening message when DecoDen in run :) 
     """
-    with open('utils/message.txt') as fp:
+    dirname = Path(__file__).parent.parent
+    with open(os.path.join(dirname, 'utils/message.txt')) as fp:
         print(fp.read())
 
 def get_blacklisted_regions_mask(df, bl_regions):

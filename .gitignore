@@ -9,3 +9,5 @@ qsub_outs/
 rerun.py
 run.sh
 devel/
+bin/
+__pycache__/
