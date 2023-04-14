@@ -7,8 +7,8 @@ from joblib import Parallel, delayed
 from pathlib import Path
 import json
 import os
-from preprocess.macs_steps import run_pipeline
-from preprocess.logger import logger
+from decoden.preprocessing.macs_steps import run_pipeline
+from decoden.preprocessing.logger import logger
 from decoden.utils import print_message
 
 def read_csv(input_csv_filepath):
@@ -101,7 +101,7 @@ def write_json(tiled_files, out_dir):
     json_obj = {os.path.join('data', os.path.basename(a[0])): a[1] for a in tiled_files}
     json.dump(json_obj, open(out_filename, 'w'), indent=1)
 
-def run(input_csv, bin_size, num_jobs, out_dir):
+def run_preprocessing(input_csv, bin_size, num_jobs, out_dir):
     """Run DecoDen for all samples. This is supposed to be parallel, but currently it is not working. 
 
     Args:
@@ -143,4 +143,4 @@ if __name__ == '__main__':
     logger.info('Checking for output directory...')
     Path(args.out_dir).mkdir(parents=True, exist_ok=True)
     
-    _ = run(args.input_csv, args.bin_size, args.num_jobs, args.out_dir)
+    _ = run_preprocessing(args.input_csv, args.bin_size, args.num_jobs, args.out_dir)

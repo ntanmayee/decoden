@@ -14,7 +14,7 @@ import seaborn as sns
 from pathlib import Path
 import warnings
 from decoden.utils import get_blacklisted_regions_mask, load_files, print_message
-from decoden.functions import extract_mixing_matrix, extract_signal, run_HSR
+from decoden.denoising.functions import extract_mixing_matrix, extract_signal, run_HSR
 
 
 def main(args):

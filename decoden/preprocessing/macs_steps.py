@@ -5,7 +5,7 @@ import argparse
 import subprocess
 import os
 import uuid
-from preprocess.logger import logger 
+from decoden.preprocessing.logger import logger 
 from pathlib import Path
 
 def filter_duplicate_reads(filename, out_dir, name):
@@ -20,6 +20,9 @@ def filter_duplicate_reads(filename, out_dir, name):
         _type_: _description_
     """
     logger.info(f'Filtering duplicate reads for {filename}')
+    
+    # data_dir = os.path.join()
+    # os.makedirs(data_dir, exist_ok=True)
 
     out_filepath = os.path.join(out_dir, 'data', os.path.splitext(os.path.basename(filename))[0] + '_filterdup.bed')
     logger.info(f'Filtered filepath will be {out_filepath}')
@@ -70,7 +73,7 @@ def get_fragment_length(filtered_filepath):
         fragment_length = int([s for s in result.stderr.split('\n') if 'tag size is' in s][0].split()[-2])
     except:
         logger.error(f'Unable to compute fragment length for {filtered_filepath}')
-        raise Exception('Unable to compute fragment length')
+        raise Exception(f'Unable to compute fragment length for {filtered_filepath}')
     return fragment_length
 
 def tile(extended_filepath, bin_size):
@@ -133,4 +136,11 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     tiled_filepath = run_pipeline(args.input_filepath, args.name, args.out_dir, args.is_control, args.bin_size)
-#     tile('temp/e1_filterdup_pileup.bdg', 200)
+    
+#     input_filepath = "/home/gvisona/Projects/Testing_Decoden/data/wce/ENCFF234NNJ_chr21.bam"
+#     name = "test"
+#     out_dir = "/home/gvisona/Projects/Testing_Decoden/outputs"
+#     is_control = 1
+#     bin_size = 200
+#     tiled_filepath = run_pipeline(input_filepath, name, out_dir, is_control, bin_size)
+# #     tile('temp/e1_filterdup_pileup.bdg', 200)

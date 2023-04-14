@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "decoden"
+version = "0.1.0"
+description = "Deconvolve and Denoise: remove ChIP-seq biases with a causality-based model"
+authors = ["Giovanni Visona <giovanni.visona@tuebingen.mpg.de>"]
+readme = "README.md"
+
+[tool.poetry.scripts]
+decoden = "decoden.__main__:app"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+typer = {extras = ["all"], version = "^0.7.0"}
+MACS2 = "^2.2.6"
+numpy = "^1.24.2"
+pandas = "^2.0.0"
+matplotlib = "^3.7.1"
+scikit-learn = "^1.2.2"
+tqdm = "^4.65.0"
+seaborn = "^0.12.2"
+
+[tool.poetry.dev-dependencies]
+pytest = "^7.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

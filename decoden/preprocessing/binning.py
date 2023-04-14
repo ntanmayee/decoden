@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from tqdm.notebook import tqdm
+from tqdm import tqdm
 from collections import namedtuple
 import os
 import csv                                

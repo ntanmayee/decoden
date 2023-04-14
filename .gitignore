@@ -11,3 +11,7 @@ run.sh
 devel/
 bin/
 __pycache__/
+dist/
+
+*.egg-info
+OLD

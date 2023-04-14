@@ -3,9 +3,9 @@ from argparse import Namespace
 from pathlib import Path
 import json
 import os
-from preprocess.logger import logger
+from decoden.preprocessing.logger import logger
 from decoden.utils import print_message
-from run_preprocess import run
+from decoden.preprocessing.pipeline import run
 from run_decoden import main
 
 
