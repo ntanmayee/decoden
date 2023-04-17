@@ -6,27 +6,9 @@ import os
 from decoden.preprocessing.logger import logger
 from decoden.utils import print_message
 from decoden.preprocessing.pipeline import run
-from run_decoden import main
+from OLD.run_decoden import main
 
 
-def extract_conditions(json_file):
-    """Extract list of different experimental conditions, to pass to run_decoden.py. Assumes that `control` is the first condition.
-
-    Args:
-        json_file (string): path to `experiment_conditions.json` generated from run_preprocess.py
-
-    Returns:
-        list: list of different experimental conditions
-    """
-    json_object = json.load(open(json_file))
-    
-    conditions = []
-    for key in json_object:
-        value = json_object[key]
-        if value not in conditions:
-            conditions.append(value)
-    logger.info(conditions)
-    return conditions 
 
 
 if __name__ == '__main__':
