@@ -56,7 +56,7 @@ If you would prefer to run preprocessing and DecoDen separately, use the followi
 Pre-processing includes removing duplicate reads, extending reads and tiling the data into bins. These steps require MACS2, BEDOPS and BEDTools.
 
 ```bash
-python run_preprocess.py -i "samples.csv" \ # CSV file with filepath and conditions
+decoden preprocess -i "samples.csv" \ # CSV file with filepath and conditions
                          -o "output_directory" \ # directory for preprocessed files
                          -bs 200 \ # bin size for tiling (default 200)
                          -n 2 \ # number of jobs for parallelization (default 1)

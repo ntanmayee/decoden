@@ -1,4 +1,6 @@
-"""This module runs the DecoDen pipeline for each replicate (peak calling)
+#!/usr/bin/env python3
+
+"""This module runs the DecoDen pipeline for peak consolidation
 """
 
 import pandas as pd
@@ -10,50 +12,72 @@ from os.path import join, exists
 import matplotlib.pyplot as plt
 import seaborn as sns
 from pathlib import Path
+import warnings
 from decoden.utils import get_blacklisted_regions_mask, load_files, print_message
-from decoden.denoising.functions import extract_mixing_matrix, extract_signal, run_HSR_replicates
+from decoden.denoising.nmf import extract_mixing_matrix, extract_signal
+from decoden.denoising.hsr import run_HSR
 
 
-def main(args):
+def run_consolidate(data_folder, 
+                    files_reference, 
+                    conditions, 
+                    output_folder, 
+                    blacklist_file,
+                    alpha_W=0.01, 
+                    alpha_H=0.001, 
+                    control_cov_threshold=0.1, 
+                    n_train_bins=50000, 
+                    chunk_size=50000, 
+                    seed=0):
+    
+    
     """`main` function that runs the internal pipeline for DecoDen
 
     Args:
-        args : arguments from ArgumentParser
+        data_folder: Path to preprocessed data files in BED format
+        files_reference: Path to JSON file with experiment conditions. 
+                        If you used DecoDen for pre-processing, use the `experiment_conditions.json` file
+        conditions: list of experimental conditions. First condition MUST correspond to the control/input samples.
+        output_folder: Path to output directory
+        blacklist_file: Path to blacklist file. Make sure to use the blacklist that is appropriate for the genome assembly/organism.
+        control_cov_threshold : Threshold for coverage in control samples. Only genomic bins above this threshold will be used. 
+                                It is recommended to choose a value larger than 1/bin_size.
+        n_train_bins: Number of genomic bins to be used for training
+        chunk_size: Chunk size for processing the signal matrix. Should be smaller than `n_train_bins`
+        alpha_W: Regularisation for the signal matrix
+        alpha_H: Regularisation for the mixing matrix
     """
+
     # validate arguments
-    assert args.control_cov_threshold > 0, 'Control coverage threshold must be greater than 0'
-    assert args.n_train_bins > 0, 'Number of training bins must be greater than 0'
-    assert args.chunk_size > 0, 'Chunk size must be greater than 0'
-    assert args.alpha_W > 0, '`alpha_W` must be greater than 0'
-    assert args.alpha_H > 0, '`alpha_H` must be greater than 0'
+    assert control_cov_threshold > 0, 'Control coverage threshold must be greater than 0'
+    assert n_train_bins > 0, 'Number of training bins must be greater than 0'
+    assert chunk_size > 0, 'Chunk size must be greater than 0'
+    assert alpha_W > 0, '`alpha_W` must be greater than 0'
+    assert alpha_H > 0, '`alpha_H` must be greater than 0'
 
-    with open(args.files_reference, "r") as f:
+    with open(files_reference, "r") as f:
         files = json.load(f)
-    assert set(args.conditions) == set([files[i] for i in files]), 'Conditions do not match conditions in reference file. Perhaps there is an error in `--conditions` argument?'
-    if not exists(args.output_folder):
-        os.makedirs(args.output_folder)
+    assert set(conditions) == set([files[i] for i in files]), 'Conditions do not match conditions in reference file. Perhaps there is an error in `--conditions` argument?'
+    if not exists(output_folder):
+        os.makedirs(output_folder)
 
-    with open(join(args.output_folder, "config.json"), "w") as f:
-        json.dump(vars(args), f, indent=2)
+    # with open(join(output_folder, "config.json"), "w") as f:
+    #     json.dump(vars(args), f, indent=2)
 
 
     # Load data
-    conditions = args.conditions
-    data, conditions_counts = load_files(files, args.data_folder, conditions)
+    data, conditions_counts = load_files(files, data_folder, conditions)
 
     # Filter BL regions
-    if args.blacklist_file is not None:
-        bl_regions = pd.read_csv(args.blacklist_file,
+    if blacklist_file is not None:
+        bl_regions = pd.read_csv(blacklist_file,
                             sep="\t", header=None, names=["seqnames", "start", "end", "type"])
         mask = get_blacklisted_regions_mask(data, bl_regions)
     else:
+        warnings.warn('No blacklist supplied, using all data for next steps')
         mask = np.ones(len(data)).astype(bool)
     data_noBL = data[mask]
-
-
-    nmf_folder = join(args.output_folder, "NMF")
-    if not exists(nmf_folder):
-        os.makedirs(nmf_folder)
+    nmf_folder = join(output_folder, "NMF")
 
     # skip NMF step if already computed
     if Path(join(nmf_folder, "mixing_matrix.csv")).exists() and Path(join(nmf_folder, "mixing_matrix.pdf")).exists():
@@ -63,10 +87,13 @@ def main(args):
         wmatrix.set_index(["seqnames", "start", "end"], inplace=True)
 
     else:
+        if not exists(nmf_folder):
+            os.makedirs(nmf_folder)
+
         # Extract mixing matrix
-        mmatrix = extract_mixing_matrix(data_noBL, conditions, conditions_counts, alpha_W=args.alpha_W, 
-                                    alpha_H=args.alpha_H, control_cov_threshold=args.control_cov_threshold, 
-                                    n_train_bins=args.n_train_bins, seed=args.seed)
+        mmatrix = extract_mixing_matrix(data_noBL, conditions, conditions_counts, alpha_W=alpha_W, 
+                                    alpha_H=alpha_H, control_cov_threshold=control_cov_threshold, 
+                                    n_train_bins=n_train_bins, seed=seed)
         mmatrix.to_csv(join(nmf_folder, "mixing_matrix.csv"))
 
         # visualise the mixing matrix
@@ -77,7 +104,7 @@ def main(args):
         plt.close(fig)
 
         # Extract signal matrix
-        wmatrix = extract_signal(data, mmatrix, conditions, chunk_size=args.chunk_size, alpha_W=args.alpha_W, seed=args.seed)
+        wmatrix = extract_signal(data, mmatrix, conditions, chunk_size=chunk_size, alpha_W=alpha_W, seed=seed)
         wmatrix.reset_index().to_feather(join(nmf_folder, "signal_matrix.ftr"))
 
         # Sanity check plots
@@ -100,13 +127,13 @@ def main(args):
         fig.savefig(join(nmf_folder, "signal_matrix_sample.pdf"), bbox_inches="tight")
         plt.close(fig)
 
-    del data
+        del data, data_noBL
 
     # Perform HSR to remove multiplicative noise
-    hsr_df = run_HSR_replicates(data_noBL, wmatrix, mmatrix, mask, conditions, conditions_counts)
-    hsr_df.reset_index().to_feather(join(args.output_folder, "HSR_results_replicates.ftr"))
+    hsr_df = run_HSR(wmatrix, mask, conditions)
+    hsr_df.reset_index().to_feather(join(output_folder, "HSR_results.ftr"))
     
-    print("\nDecoDen (replicate specific) complete!")
+    print("\nDecoDen complete!")
 
 
 if __name__=="__main__":
@@ -131,4 +158,4 @@ if __name__=="__main__":
     parser.add_argument("--alpha_H", type=float, default=0.001, help='Regularisation for the mixing matrix')
 
     args = parser.parse_args()
-    main(args)
+    run_consolidate(args)

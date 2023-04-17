@@ -1,9 +1,16 @@
 import pandas as pd
 import numpy as np
+import json
+import os
+from os.path import exists, join
 from sklearn.decomposition import NMF, non_negative_factorization
-from sklearn.linear_model import LinearRegression
 from tqdm import tqdm
+from pathlib import Path
 import warnings
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from decoden.utils import get_blacklisted_regions_mask, load_files, print_message
 
 
 def extract_mixing_matrix(data_df, conditions_list, conditions_counts_ref, alpha_W=0.01, alpha_H=0.001,
@@ -152,7 +159,9 @@ def extract_mixing_matrix_shared_unspecific(data_df, conditions_list, conditions
     #     ix += c
     # mm = pd.DataFrame(mixing_matrix, index=[
     #                   "unspecific"]+treatment_conditions, columns=train_data.columns)
-    return mm
+    return []#mm
+
+
 
 
 def extract_signal(data_df, mmatrix, conditions_list, chunk_size=100000, alpha_W=0.01, seed=42):
@@ -187,100 +196,122 @@ def extract_signal(data_df, mmatrix, conditions_list, chunk_size=100000, alpha_W
     return processed_W
 
 
-def run_HSR(wmat, bl_mask, conditions_list, eps=1e-20):
-    """Run HSR step of DecoDen
 
-    Args:
-        wmat (np.array): signal matrix from NMF step
-        bl_mask (np.array): mask of genomic bins that belong to blacklist regions
-        conditions_list (list): list of experimental conditions
-        eps (_type_, optional): minimum value threshold. Defaults to 1e-20.
-    """
-    control_condition = conditions_list[0]
-    out_df = wmat.loc[:, []]
-
-    control_transf = wmat.loc[:, control_condition].apply(
-        lambda x: np.maximum(eps, x)).apply(np.log)
-
-#     control_transf -= np.mean(control_transf)
-
-    for i, treatment_cond in tqdm(enumerate(conditions_list[1:])):
-        # Select only values above the median for the fit, to reduce the contribution of noise
-        treatment_transf = wmat.loc[:, treatment_cond].apply(
-            lambda x: np.maximum(eps, x)).apply(np.log)
-        mean_treatment_transf = np.mean(treatment_transf)
-#         treatment_transf -= mean_treatment_transf
-
-        # print warning message if median is too low
-        if (np.median(treatment_transf[bl_mask]) < 1) or (np.median(treatment_transf[bl_mask]) < 1):
-            warnings.warn("Treatment/Control coverage might be too low for half-sibling regression to be effective!")
-
-        fit_ixs = np.where((control_transf[bl_mask] > np.median(control_transf[bl_mask])) & (
-            treatment_transf[bl_mask] > np.median(treatment_transf[bl_mask])))[0]
-        reg = LinearRegression(fit_intercept=False).fit(
-            control_transf[bl_mask].values[fit_ixs].reshape(-1, 1), treatment_transf[bl_mask][fit_ixs])
-
-        log_pred = np.maximum(reg.predict(
-            control_transf.values.reshape(-1, 1)), np.log(0.5))
-        pred = np.exp(log_pred)
-#         track = np.exp(treatment_transf+mean_treatment_transf-log_pred)
-        track = np.exp(treatment_transf-log_pred)
-        out_df[treatment_cond+" HSR Value"] = track
-        out_df[treatment_cond+" fit"] = pred
-
-    return out_df
-
-
-def run_HSR_replicates(replicates, wmat, mmat, bl_mask, conditions_list, conditions_counts_ref, eps=1e-20):
-    """Run HSR step of DecoDen to adjust individual replicates
-
-    Args:
-        replicates (DataFrame): the original samples before the NMF step
-        wmat (np.array): signal matrix from NMF step
-        mmat (np.array): mixing matrix from NMF step
-        bl_mask (np.array): mask of genomic bins that belong to blacklist regions
-        conditions_list (list): list of experimental conditions
-        conditions_counts_ref (dict): the reference of how many samples are given for each condition
-        eps (_type_, optional): minimum value threshold. Defaults to 1e-20.
-    """
-
-    control_condition = conditions_list[0]
-    out_df = wmat.loc[:, []]
-    n_control_samples = conditions_counts_ref[control_condition]
-
-
-    control_transf = wmat.loc[:, control_condition].apply(
-        lambda x: np.maximum(eps, x)).apply(np.log)
-
-    #     control_transf -= np.mean(control_transf)
-
-    treatment_columns = [c for c in replicates.columns if not c.startswith(control_condition)]
-    # samples_conditions = [c.split("_")[0] for c in treatment_columns]
-    tissue_signal = wmat.loc[:, control_condition]
-    for i, treatment_sample in tqdm(enumerate(treatment_columns)):
-        # Select only values above the median for the fit, to reduce the contribution of noise
-        sample_condition = treatment_sample.split("_")[0]
-        sample_data = replicates.loc[:, treatment_sample]
-
-        tissue_coef = mmat.iloc[0, i+n_control_samples]
-
-        sample_specific_signal = (sample_data - tissue_coef*tissue_signal).clip(eps, None)
-        treatment_transf = sample_specific_signal.apply(np.log)
-
-        # mean_treatment_transf = np.mean(treatment_transf)
-        # treatment_transf -= mean_treatment_transf
-        fit_ixs = np.where((control_transf[bl_mask] > np.median(control_transf[bl_mask])) & (
-            treatment_transf[bl_mask] > np.median(treatment_transf[bl_mask])))[0]
-        reg = LinearRegression(fit_intercept=False).fit(
-            control_transf[bl_mask].values[fit_ixs].reshape(-1, 1), treatment_transf[bl_mask][fit_ixs])
-
-        log_pred = np.maximum(reg.predict(
-            control_transf.values.reshape(-1, 1)), np.log(0.5))
-        pred = np.exp(log_pred)
-    #         track = np.exp(treatment_transf+mean_treatment_transf-log_pred)
-        track = np.exp(treatment_transf-log_pred)
-        out_df[treatment_sample+" HSR Value"] = track
-        out_df[treatment_sample+" fit"] = pred
-
+def run_NMF(data_folder, 
+        files_reference, 
+        conditions, 
+        output_folder, 
+        blacklist_file=None,
+        alpha_W=0.01, 
+        alpha_H=0.001, 
+        control_cov_threshold=0.1, 
+        n_train_bins=50000, 
+        chunk_size=50000, 
+        seed=0,
+        plotting=True):
     
-    return out_df
+    
+    """`main` function that runs the internal pipeline for DecoDen
+
+    Args:
+        data_folder: Path to preprocessed data files in BED format
+        files_reference: Path to JSON file with experiment conditions. 
+                        If you used DecoDen for pre-processing, use the `experiment_conditions.json` file
+        conditions: list of experimental conditions. First condition MUST correspond to the control/input samples.
+        output_folder: Path to output directory
+        blacklist_file: Path to blacklist file. Make sure to use the blacklist that is appropriate for the genome assembly/organism.
+        control_cov_threshold : Threshold for coverage in control samples. Only genomic bins above this threshold will be used. 
+                                It is recommended to choose a value larger than 1/bin_size.
+        n_train_bins: Number of genomic bins to be used for training
+        chunk_size: Chunk size for processing the signal matrix. Should be smaller than `n_train_bins`
+        alpha_W: Regularisation for the signal matrix
+        alpha_H: Regularisation for the mixing matrix
+    """
+
+    # validate arguments
+    assert control_cov_threshold > 0, 'Control coverage threshold must be greater than 0'
+    assert n_train_bins > 0, 'Number of training bins must be greater than 0'
+    assert chunk_size > 0, 'Chunk size must be greater than 0'
+    assert alpha_W > 0, '`alpha_W` must be greater than 0'
+    assert alpha_H > 0, '`alpha_H` must be greater than 0'
+
+    with open(files_reference, "r") as f:
+        files = json.load(f)
+    assert set(conditions) == set([files[i] for i in files]), 'Conditions do not match conditions in reference file. Perhaps there is an error in `--conditions` argument?'
+    if not exists(output_folder):
+        os.makedirs(output_folder)
+
+
+
+    config = {}
+    
+    with open(join(output_folder, "config.json"), "w") as f:
+        json.dump(config, f, indent=2)
+
+
+    # Load data
+    data, conditions_counts = load_files(files, data_folder, conditions)
+
+    # Filter BL regions
+    if blacklist_file is not None:
+        bl_regions = pd.read_csv(blacklist_file,
+                            sep="\t", header=None, names=["seqnames", "start", "end", "type"])
+        mask = get_blacklisted_regions_mask(data, bl_regions)
+    else:
+        warnings.warn('No blacklist supplied, using all data for next steps')
+        mask = np.ones(len(data)).astype(bool)
+    data_noBL = data[mask]
+    nmf_folder = join(output_folder, "NMF")
+
+    # skip NMF step if already computed
+    if Path(join(nmf_folder, "mixing_matrix.csv")).exists(): # and Path(join(nmf_folder, "mixing_matrix.pdf")).exists():
+        print('`NMF` directory found. Using existing NMF results')
+        mmatrix = pd.read_csv(join(nmf_folder, "mixing_matrix.csv"), index_col=0)
+        wmatrix = pd.read_csv(join(nmf_folder, "signal_matrix.csv"))
+        wmatrix.set_index(["seqnames", "start", "end"], inplace=True)
+
+    else:
+        os.makedirs(nmf_folder, exist_ok=True)
+
+        # Extract mixing matrix
+        mmatrix = extract_mixing_matrix(data_noBL, conditions, conditions_counts, alpha_W=alpha_W, 
+                                    alpha_H=alpha_H, control_cov_threshold=control_cov_threshold, 
+                                    n_train_bins=n_train_bins, seed=seed)
+        mmatrix.to_csv(join(nmf_folder, "mixing_matrix.csv"))
+        
+        # Extract signal matrix
+        wmatrix = extract_signal(data, mmatrix, conditions, chunk_size=chunk_size, alpha_W=alpha_W, seed=seed)
+        wmatrix.reset_index().to_feather(join(nmf_folder, "signal_matrix.ftr"))
+        
+        
+        if plotting:
+            # visualise the mixing matrix
+            plt.ioff()
+            fig, ax = plt.subplots(figsize=(len(files),len(conditions)))
+            sns.heatmap(mmatrix, annot=True, fmt=".2f", ax=ax)
+            fig.savefig(join(nmf_folder, "mixing_matrix.pdf"), bbox_inches="tight")
+            plt.close(fig)
+
+
+
+            # Sanity check plots
+            plt.ioff()
+            fig, axs = plt.subplots(1, 3, figsize=(10,20))
+            np.random.seed(seed)
+            ixs = np.sort(np.random.choice(range(len(data)), size=500, replace=False))
+            sns.heatmap(data.values[ixs], ax=axs[0])
+            axs[0].set_title("Data Matrix")
+            sns.heatmap(wmatrix.values.dot(mmatrix.values)[ixs], ax=axs[1])
+            axs[1].set_title("Reconstruction")
+            sns.heatmap(wmatrix.values[ixs], ax=axs[2])
+            axs[2].set_title("Signal Matrix")
+            axs[0].set_yticklabels([])
+            axs[0].set_yticks([])
+            axs[1].set_yticklabels([])
+            axs[1].set_yticks([])
+            axs[2].set_yticklabels([])
+            axs[2].set_yticks([])
+            fig.savefig(join(nmf_folder, "signal_matrix_sample.pdf"), bbox_inches="tight")
+            plt.close(fig)
+
+    return wmatrix, mmatrix, data_noBL, mask, conditions_counts

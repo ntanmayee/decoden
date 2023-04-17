@@ -3,6 +3,10 @@ import os
 from tqdm import tqdm
 import numpy as np
 from pathlib import Path
+import json
+import os
+from decoden.preprocessing.logger import logger
+
 
 def print_message():
     """Print cool opening message when DecoDen in run :) 
@@ -62,3 +66,23 @@ def load_files(files_ref, data_folder, sample_conditions):
             data = pd.merge(data, df, left_index=True, right_index=True)
 
     return data, conditions_counts
+
+
+def extract_conditions(json_file):
+    """Extract list of different experimental conditions, to pass to run_decoden.py. Assumes that `control` is the first condition.
+
+    Args:
+        json_file (string): path to `experiment_conditions.json` generated from run_preprocess.py
+
+    Returns:
+        list: list of different experimental conditions
+    """
+    json_object = json.load(open(json_file))
+    
+    conditions = []
+    for key in json_object:
+        value = json_object[key]
+        if value not in conditions:
+            conditions.append(value)
+    logger.info(conditions)
+    return conditions 
