@@ -68,12 +68,12 @@ def load_files(files_ref, data_folder, sample_conditions):
     return data, conditions_counts
 
 
-def extract_conditions(json_file):
+def extract_conditions(json_file, control_condition="control"):
     """Extract list of different experimental conditions, to pass to run_decoden.py. Assumes that `control` is the first condition.
 
     Args:
         json_file (string): path to `experiment_conditions.json` generated from run_preprocess.py
-
+        control_condition (string): the label of the control/input condition 
     Returns:
         list: list of different experimental conditions
     """
@@ -84,5 +84,9 @@ def extract_conditions(json_file):
         value = json_object[key]
         if value not in conditions:
             conditions.append(value)
+            
+    if not control_condition in conditions:
+        raise Exception("Invalid label for control condition")
+    conditions = [control_condition] + [c for c in conditions if c!=control_condition]
     logger.info(conditions)
     return conditions 

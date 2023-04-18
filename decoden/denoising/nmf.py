@@ -267,7 +267,7 @@ def run_NMF(data_folder,
     if Path(join(nmf_folder, "mixing_matrix.csv")).exists(): # and Path(join(nmf_folder, "mixing_matrix.pdf")).exists():
         print('`NMF` directory found. Using existing NMF results')
         mmatrix = pd.read_csv(join(nmf_folder, "mixing_matrix.csv"), index_col=0)
-        wmatrix = pd.read_csv(join(nmf_folder, "signal_matrix.csv"))
+        wmatrix = pd.read_feather(join(nmf_folder, "signal_matrix.ftr"))
         wmatrix.set_index(["seqnames", "start", "end"], inplace=True)
 
     else:
