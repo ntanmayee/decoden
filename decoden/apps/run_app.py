@@ -3,7 +3,7 @@ import json
 from os.path import join
 from pathlib import Path
 from typing import Optional, List
-from decoden.utils import extract_conditions
+from decoden.utils import extract_conditions, save_hsr_output
 from decoden.preprocessing.pipeline import run_preprocessing
 from decoden.denoising.nmf import run_NMF
 from decoden.denoising.hsr import run_HSR, run_HSR_replicates
@@ -69,14 +69,16 @@ def run_consolidate(
                                                                     plotting=plotting)
     # Perform HSR to remove multiplicative noise
     hsr_df = run_HSR(wmatrix, mask, conditions)
-    hsr_df.reset_index().to_feather(join(out_dir, "HSR_results.ftr"))
+    # hsr_df.reset_index().to_feather(join(out_dir, "HSR_results.ftr"))
+    
+    save_hsr_output(hsr_df, out_dir, label="_consolidate")
     
     typer.echo("\nDecoDen complete!")
     
 
 
 @run_app.command("replicates")
-def run_replicates(    input_csv: Optional[Path] = typer.Option(None, "--input_csv", "-i", help="""Path to CSV file with information about 
+def run_replicates(input_csv: Optional[Path] = typer.Option(None, "--input_csv", "-i", help="""Path to CSV file with information about 
                                             experimental conditions. Must contain `filepath`, `exp_name` and `is_control` columns. 
                                             Control/input should be the first condition. Input files can be in BED/BAM format."""), 
     bin_size: int = typer.Option(200, "--bin_size", "-bs", help="""Aize of genomic bin for tiling. 
@@ -131,6 +133,7 @@ def run_replicates(    input_csv: Optional[Path] = typer.Option(None, "--input_c
 
     # Perform HSR to remove multiplicative noise
     hsr_df = run_HSR_replicates(data_noBL, wmatrix, mmatrix, mask, conditions, conditions_counts)
-    hsr_df.reset_index().to_feather(join(out_dir, "HSR_results_replicates.ftr"))
+    # hsr_df.reset_index().to_feather(join(out_dir, "HSR_results_replicates.ftr"))
     
+    save_hsr_output(hsr_df, out_dir, label="_replicates")
     typer.echo("\nDecoDen (replicate specific) complete!")

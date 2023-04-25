@@ -5,7 +5,9 @@ import numpy as np
 from pathlib import Path
 import json
 import os
+from os.path import join
 from decoden.preprocessing.logger import logger
+import random
 
 
 def print_message():
@@ -90,3 +92,27 @@ def extract_conditions(json_file, control_condition="control"):
     conditions = [control_condition] + [c for c in conditions if c!=control_condition]
     logger.info(conditions)
     return conditions 
+
+
+def save_hsr_output(hsr_df, out_dir, label=""):
+    print("\nSaving HSR output")
+    hsr_df.reset_index().to_feather(join(out_dir, f"HSR_results{label}.ftr"))
+    bedgraph_dir = join(out_dir, "bedgraph_files")
+    os.makedirs(bedgraph_dir, exist_ok=True)
+    cols = [c for c in hsr_df.columns if c.endswith("HSR Value")]
+    
+    r = lambda: random.randint(0, 255) 
+    for c in tqdm(cols):
+        track = c.split(" HSR")[0]
+        
+        random.seed(track)
+        color1 = '{},{},{}'.format(r(),r(),r())
+        color2 = '{},{},{}'.format(r(),r(),r())
+        
+        fname = join(bedgraph_dir, f"{track}_HSR.bdg")
+        with open(fname, 'w') as f:
+            f.write(f'track type=bedGraph name="{track}" description="{track}" visibility=full color={color1} altColor={color2} priority=20\n')
+        hsr_df[[c]].fillna(0.0).to_csv(fname, header=False, sep="\t", mode='a')
+    
+    
+    

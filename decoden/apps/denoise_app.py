@@ -1,11 +1,12 @@
 import typer
 import json
+import os
 from os.path import join
 from pathlib import Path
 from typing import Optional, List
 from decoden.denoising.nmf import run_NMF
 from decoden.denoising.hsr import run_HSR, run_HSR_replicates
-
+from decoden.utils import save_hsr_output
 
 denoise_app = typer.Typer()
 
@@ -47,7 +48,8 @@ def denoise_consolidated(
                                                                     plotting=plotting)
     # Perform HSR to remove multiplicative noise
     hsr_df = run_HSR(wmatrix, mask, conditions)
-    hsr_df.reset_index().to_feather(join(out_dir, "HSR_results.ftr"))
+    save_hsr_output(hsr_df, out_dir, label="_consolidate")
+    # hsr_df.reset_index().to_feather(join(out_dir, "HSR_results.ftr"))
     
     typer.echo("\nDecoDen complete!")
     
@@ -91,6 +93,6 @@ def denoise_replicates(
 
     # Perform HSR to remove multiplicative noise
     hsr_df = run_HSR_replicates(data_noBL, wmatrix, mmatrix, mask, conditions, conditions_counts)
-    hsr_df.reset_index().to_feather(join(out_dir, "HSR_results_replicates.ftr"))
-    
+    save_hsr_output(hsr_df, out_dir, label="_replicates")
+
     typer.echo("\nDecoDen (replicate specific) complete!")
