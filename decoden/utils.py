@@ -97,6 +97,7 @@ def extract_conditions(json_file, control_condition="control"):
 def save_hsr_output(hsr_df, out_dir, label=""):
     print("\nSaving HSR output")
     hsr_df.reset_index().to_feather(join(out_dir, f"HSR_results{label}.ftr"))
+    
     bedgraph_dir = join(out_dir, "bedgraph_files")
     os.makedirs(bedgraph_dir, exist_ok=True)
     cols = [c for c in hsr_df.columns if c.endswith("HSR Value")]
