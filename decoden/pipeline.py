@@ -26,7 +26,8 @@ def _decoden_pipeline(pipeline_steps,
                       num_jobs=None,
                       
                       # NMF + HSR arguments
-                      control_condition=None,
+                      files_reference=None,
+                      control_label=None,
                       blacklist_file=None,
                       alpha_W=None,
                       alpha_H=None,
@@ -46,11 +47,11 @@ def _decoden_pipeline(pipeline_steps,
         Path(out_dir).mkdir(parents=True, exist_ok=True)
 
         tiled_files = run_preprocessing(input_csv, bin_size, num_jobs, out_dir)
+        files_reference = join(out_dir, 'experiment_conditions.json')
         
         
     if "nmf" in pipeline_steps:        
-        files_reference = join(out_dir, 'experiment_conditions.json')
-        conditions = extract_conditions(files_reference, control_condition=control_condition)
+        conditions = extract_conditions(files_reference, control_label=control_label)
         wmatrix, mmatrix, data_noBL, mask, conditions_counts = run_NMF(out_dir, 
                                                                         files_reference, 
                                                                         conditions, 

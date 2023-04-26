@@ -1,25 +1,22 @@
 import pytest
-
+import json
 from os.path import join, exists
 
 from decoden.main import *
 
-correct_csv = join("tests", "sample_data", "samples.csv")
-output_directory = "decoden_output"
 
-
-@pytest.fixture(scope="session")
-def tmp_session_directory(tmp_path_factory):
-    tmp_folder = tmp_path_factory.mktemp("tmp_test_folder")
-    return tmp_folder
-
-
-def test_output_files_created(tmp_session_directory):
+def test_output_files_created(tmp_session_directory, correct_csv):
     bin_size = 200
     num_jobs = 1
-    out_dir = join(tmp_session_directory, output_directory)
+    out_dir = tmp_session_directory
     assert exists(correct_csv)
     
     preprocess(correct_csv, bin_size, num_jobs, out_dir)
     
     assert exists(out_dir)
+    assert exists(join(out_dir, "experiment_conditions.json"))
+    
+    with open(join(out_dir, "experiment_conditions.json"), "r") as f:
+        experiment_conditions = json.load(f)
+    for k in experiment_conditions.keys():
+        assert exists(join(out_dir, k))

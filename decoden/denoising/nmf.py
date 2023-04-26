@@ -197,8 +197,7 @@ def extract_signal(data_df, mmatrix, conditions_list, chunk_size=100000, alpha_W
 
 
 
-def run_NMF(data_folder, 
-        files_reference, 
+def run_NMF(files_reference, 
         conditions, 
         output_folder, 
         blacklist_file=None,
@@ -214,7 +213,6 @@ def run_NMF(data_folder,
     """`main` function that runs the internal pipeline for DecoDen
 
     Args:
-        data_folder: Path to preprocessed data files in BED format
         files_reference: Path to JSON file with experiment conditions. 
                         If you used DecoDen for pre-processing, use the `experiment_conditions.json` file
         conditions: list of experimental conditions. First condition MUST correspond to the control/input samples.
@@ -237,6 +235,8 @@ def run_NMF(data_folder,
 
     with open(files_reference, "r") as f:
         files = json.load(f)
+        
+    data_folder = os.path.dirname(files_reference) 
     assert set(conditions) == set([files[i] for i in files]), 'Conditions do not match conditions in reference file. Perhaps there is an error in `--conditions` argument?'
     if not exists(output_folder):
         os.makedirs(output_folder)

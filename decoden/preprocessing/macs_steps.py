@@ -54,7 +54,7 @@ def extend_reads(filepath, extend_length, is_control=0):
     os.remove(filepath)
     return out_filepath
 
-def get_fragment_length(filtered_filepath):
+def get_fragment_length(filtered_filepath, output_dir):
     """Estimate fragment length. Internally uses `macs2 predictd`.
 
     Args:
@@ -68,7 +68,7 @@ def get_fragment_length(filtered_filepath):
     """
     logger.info(f'Getting fragment length for {filtered_filepath}')
 
-    result = subprocess.run(f'macs2 predictd -i {filtered_filepath} -g hs -m 5 50', capture_output=True, text=True, shell=True)
+    result = subprocess.run(f'macs2 predictd -i {filtered_filepath} -g hs -m 5 50 --outdir {output_dir}', capture_output=True, text=True, shell=True)
     try:
         fragment_length = int([s for s in result.stderr.split('\n') if 'tag size is' in s][0].split()[-2])
     except:
@@ -119,7 +119,7 @@ def run_pipeline(input_filepath, name, out_dir, is_control, bin_size):
     logger.info(f'Running preprocessing pipeline for {input_filepath}')
 
     filterdup_filepath = filter_duplicate_reads(input_filepath, out_dir, name)
-    fragment_length = get_fragment_length(filterdup_filepath)
+    fragment_length = get_fragment_length(filterdup_filepath, out_dir)
     extended_filepath = extend_reads(filterdup_filepath, fragment_length, is_control)
     tiled_filepath = tile(extended_filepath, bin_size)
 

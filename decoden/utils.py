@@ -70,7 +70,7 @@ def load_files(files_ref, data_folder, sample_conditions):
     return data, conditions_counts
 
 
-def extract_conditions(json_file, control_condition="control"):
+def extract_conditions(json_file, control_label="control"):
     """Extract list of different experimental conditions, to pass to run_decoden.py. Assumes that `control` is the first condition.
 
     Args:
@@ -87,9 +87,9 @@ def extract_conditions(json_file, control_condition="control"):
         if value not in conditions:
             conditions.append(value)
             
-    if not control_condition in conditions:
+    if not control_label in conditions:
         raise Exception("Invalid label for control condition")
-    conditions = [control_condition] + [c for c in conditions if c!=control_condition]
+    conditions = [control_label] + [c for c in conditions if c!=control_label]
     logger.info(conditions)
     return conditions 
 
@@ -97,6 +97,8 @@ def extract_conditions(json_file, control_condition="control"):
 def save_hsr_output(hsr_df, out_dir, label=""):
     print("\nSaving HSR output")
     hsr_df.reset_index().to_feather(join(out_dir, f"HSR_results{label}.ftr"))
+    
+    # TODO: compress bergraph
     
     bedgraph_dir = join(out_dir, "bedgraph_files")
     os.makedirs(bedgraph_dir, exist_ok=True)

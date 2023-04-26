@@ -18,7 +18,9 @@ def denoise_consolidated(
     data_folder:  Optional[Path] = typer.Option(None, "--data_folder", "-df", help="Path to preprocessed data files in BED format"), 
     files_reference: Optional[Path] = typer.Option(None, "--files_reference", "-f", help="""Path to JSON file with experiment conditions. 
                         If you used DecoDen for pre-processing, use the `experiment_conditions.json` file"""), 
-    conditions: List[str] = typer.Option(None, "--conditions", "-c", help="List of experimental conditions. First condition MUST correspond to the control/input samples."), 
+    control_condition: str = typer.Option("control", "--out_dir", "-o", help="Path to directory where all output files will be written"), 
+
+    # conditions: List[str] = typer.Option(None, "--conditions", "-c", help="List of experimental conditions. First condition MUST correspond to the control/input samples."), 
     out_dir: Optional[Path] = typer.Option(None, "--out_dir", "-o", help="Path to directory where all output files will be written"), 
     blacklist_file: Optional[Path] = typer.Option(None, "--blacklist_file", "-bl", help="Path to blacklist file. Make sure to use the blacklist that is appropriate for the genome assembly/organism."), 
     alpha_W: float  = typer.Option(0.01, "--alpha_W", "-aW", help="Regularisation for the signal matrix."), 
