@@ -14,10 +14,10 @@ def run_HSR(wmat, bl_mask, conditions_list, eps=1e-20):
         conditions_list (list): list of experimental conditions
         eps (_type_, optional): minimum value threshold. Defaults to 1e-20.
     """
-    control_condition = conditions_list[0]
+    control_label = conditions_list[0]
     out_df = wmat.loc[:, []]
 
-    control_transf = wmat.loc[:, control_condition].apply(
+    control_transf = wmat.loc[:, control_label].apply(
         lambda x: np.maximum(eps, x)).apply(np.log)
 
 #     control_transf -= np.mean(control_transf)
@@ -62,19 +62,19 @@ def run_HSR_replicates(replicates, wmat, mmat, bl_mask, conditions_list, conditi
         eps (_type_, optional): minimum value threshold. Defaults to 1e-20.
     """
 
-    control_condition = conditions_list[0]
+    control_label = conditions_list[0]
     out_df = wmat.loc[:, []]
-    n_control_samples = conditions_counts_ref[control_condition]
+    n_control_samples = conditions_counts_ref[control_label]
 
 
-    control_transf = wmat.loc[:, control_condition].apply(
+    control_transf = wmat.loc[:, control_label].apply(
         lambda x: np.maximum(eps, x)).apply(np.log)
 
     #     control_transf -= np.mean(control_transf)
 
-    treatment_columns = [c for c in replicates.columns if not c.startswith(control_condition)]
+    treatment_columns = [c for c in replicates.columns if not c.startswith(control_label)]
     # samples_conditions = [c.split("_")[0] for c in treatment_columns]
-    tissue_signal = wmat.loc[:, control_condition]
+    tissue_signal = wmat.loc[:, control_label]
     for i, treatment_sample in tqdm(enumerate(treatment_columns)):
         # Select only values above the median for the fit, to reduce the contribution of noise
         sample_condition = treatment_sample.split("_")[0]

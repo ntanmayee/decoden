@@ -75,7 +75,7 @@ def extract_conditions(json_file, control_label="control"):
 
     Args:
         json_file (string): path to `experiment_conditions.json` generated from run_preprocess.py
-        control_condition (string): the label of the control/input condition 
+        control_label (string): the label of the control/input condition 
     Returns:
         list: list of different experimental conditions
     """

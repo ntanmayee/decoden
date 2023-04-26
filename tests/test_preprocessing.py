@@ -8,7 +8,7 @@ from decoden.main import *
 def test_output_files_created(tmp_session_directory, correct_csv):
     bin_size = 200
     num_jobs = 1
-    out_dir = tmp_session_directory
+    out_dir = join(tmp_session_directory, "preprocessing")
     assert exists(correct_csv)
     
     preprocess(correct_csv, bin_size, num_jobs, out_dir)
