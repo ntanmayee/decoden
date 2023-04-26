@@ -1,5 +1,6 @@
 *.pyc
 __pycache_
+.pytest_cache
 .ipynb_checkpoints/
 hg19-blacklist.v2.bed
 data/
@@ -12,6 +13,6 @@ devel/
 bin/
 __pycache__/
 dist/
-
+.vscode
 *.egg-info
 OLD

@@ -7,6 +7,7 @@ from joblib import Parallel, delayed
 from pathlib import Path
 import json
 import os
+from os.path import isabs, join
 from decoden.preprocessing.macs_steps import run_pipeline
 from decoden.preprocessing.logger import logger
 from decoden.utils import print_message
@@ -44,19 +45,26 @@ def make_args(input_csv, out_dir, bin_size):
     """Make arguments for parallelization. 
 
     Args:
-        input_csv (pandas.DataFrame): DataFrame of samples
+        input_csv (string, Path): path to CSV with details about experiment conditions and files.
         out_dir (string): path to write processed files
         bin_size (int): bin size for tiling
 
     Returns:
         list: list of args for each sample. The parameters are in this order - filepath, exp_name, out_dir, is_control, bin_size
     """
+    input_data = read_csv(input_csv)
+    input_dirname = os.path.dirname(input_csv)
+
     logger.info(f'Making arguments for parallelization...')
     arg_list = []
-    for _, row in input_csv.iterrows():
+    for _, row in input_data.iterrows():
+        filepath = row.filepath 
+        if not isabs(filepath):
+            filepath = join(input_dirname, filepath)
+        
         arg_list.append(
             (
-                row.filepath,
+                filepath,
                 row.exp_name,
                 out_dir,
                 row.is_control,
@@ -113,7 +121,6 @@ def run_preprocessing(input_csv, bin_size, num_jobs, out_dir):
     Returns:
         list: list of tuples (tiled_filepath, name). `tiled_filepath` is the path to the processed file.
     """
-    input_csv = read_csv(input_csv)
     arg_list = make_args(input_csv, out_dir, bin_size)
 
     Path(out_dir, 'data').mkdir(parents=True, exist_ok=True)

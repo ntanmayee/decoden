@@ -2,7 +2,8 @@
 name = "decoden"
 version = "0.1.0"
 description = "Deconvolve and Denoise: remove ChIP-seq biases with a causality-based model"
-authors = ["Giovanni Visona <giovanni.visona@tuebingen.mpg.de>"]
+authors = ["Giovanni Visona <giovanni.visona@tuebingen.mpg.de>",
+           "Tanmayee Narendra <tanmayee.narendra@uni-tuebingen.de>"]
 readme = "README.md"
 
 [tool.poetry.scripts]
