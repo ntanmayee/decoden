@@ -60,7 +60,9 @@ hsr_results = pd.read_feather('HSR_results_consolidated.ftr')
 
 ## Running DecoDen
 
-If you would prefer to run preprocessing and DecoDen separately, use the following commands.
+The decoden pipeline involves three main steps: preprocessing of data, denoising, and detection.
+
+To run each part of decoden separately use the following commands:
 
 ### Preprocessing
 Pre-processing includes removing duplicate reads, extending reads and tiling the data into bins. These steps require MACS2, BEDOPS and BEDTools.
@@ -69,6 +71,49 @@ Pre-processing includes removing duplicate reads, extending reads and tiling the
 decoden preprocess -i "samples.csv" -o "output_directory" -bs 200 -n 2
 ```
 The sample CSV file should contain `filepath`, `exp_name` and `is_control` columns. For an example look under `utils/samples.csv`. Preprocessed data will be written to `data` folder in the output directory.
+
+### Denoising
+
+```bash
+decoden denoise consolidate --files_reference "output_directory/experiment_conditions.json" \
+        --control_label "control" \
+        --out_dir "output_directory" \
+        --blacklist_file "data/annotations/hg19-blacklist.v2.bed" \
+        --plotting
+```
+
+```bash
+decoden denoise replicates --files_reference "output_directory/experiment_conditions.json" \
+        --control_label "control" \
+        --out_dir "output_directory" \
+        --blacklist_file "data/annotations/hg19-blacklist.v2.bed" \
+        --plotting
+```
+
+
+ ### Peak Detection
+
+
+   TODO
+
+ ### Pipeline
+
+```bash
+decoden run consolidate -i "samples.csv" -o "output_directory" -bs 200 -n 2 \
+        --control_label "control" \
+        --out_dir "output_directory" \
+        --blacklist_file "data/annotations/hg19-blacklist.v2.bed" \
+        --plotting
+```
+
+```bash
+decoden run replicates -i "samples.csv" -o "output_directory" -bs 200 -n 2 \
+        --control_label "control" \
+        --out_dir "output_directory" \
+        --blacklist_file "data/annotations/hg19-blacklist.v2.bed" \
+        --plotting
+```
+
 
 ### Running DecoDen
 
