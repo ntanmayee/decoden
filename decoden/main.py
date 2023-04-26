@@ -4,6 +4,10 @@ import json
 from os.path import join
 from pathlib import Path
 from typing import Optional, List
+
+from decoden.pipeline import _decoden_pipeline
+
+
 from decoden.preprocessing.pipeline import run_preprocessing
 from decoden.utils import print_message, extract_conditions
 from decoden.denoising.nmf import run_NMF
@@ -39,15 +43,16 @@ def preprocess(
     """
     Preprocess data to be in the correct format for DecoDen
     """
-    assert input_csv is not None, "Required input csv"
-    assert out_dir is not None, "Required output directory"
-    assert bin_size>0, "Invalid bin size"
-    assert num_jobs>0, "Invalid number of jobs"
+
     
     typer.echo("Preprocessing data")
-    Path(out_dir).mkdir(parents=True, exist_ok=True)
+    
+    _decoden_pipeline(["preprocess"], input_csv=input_csv, bin_size=bin_size, num_jobs=num_jobs, out_dir=out_dir)
+    
+    
+    # Path(out_dir).mkdir(parents=True, exist_ok=True)
 
-    _ = run_preprocessing(input_csv, bin_size, num_jobs, out_dir)
+    # _ = run_preprocessing(input_csv, bin_size, num_jobs, out_dir)
 
 
 
