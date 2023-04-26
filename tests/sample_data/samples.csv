@@ -1,0 +1,7 @@
+filepath,exp_name,is_control
+wce/ENCFF234NNJ_chr21.bam,control,1
+wce/ENCFF346JZT_chr21.bam,control,1
+h3k4me3/ENCFF404DOT_chr21.bam,h3k4me3,0
+h3k4me3/ENCFF779XRN_chr21.bam,h3k4me3,0
+h3k27me3/ENCFF623DRR_chr21.bam,h3k27me3,0
+h3k27me3/ENCFF228ABC_chr21.bam,h3k27me3,0
