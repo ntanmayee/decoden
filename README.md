@@ -15,22 +15,32 @@ DecoDen depends on MACS2, BEDOPS and BEDTools for data pre-processing.
 conda install -c bioconda macs2 bedops bedtools pandas tqdm joblib scikit-learn matplotlib seaborn
 ```
 
+*TODO* add package installation details
+
+
 ## Quick Start
 ### Prepare data
-Create a CSV file with details about samples. DecoDen expects aligned reads in BED/BAM format.  The sample CSV file must contain `filepath`, `exp_name` and `is_control` columns. For an example look under [`utils/samples.csv`](https://github.com/ntanmayee/DecoDen/blob/main/utils/samples.csv). 
+Create a CSV file with details about samples. DecoDen expects aligned reads in BED/BAM format.  The sample CSV file must contain `filepath`, `exp_name` and `is_control` columns. For an example look under [`tests/sample_data/samples.csv`](https://github.com/ntanmayee/DecoDen/blob/cline/tests/sample_data/samples.csv). 
 
 ### Running DecoDen
+
+*TODO* add description of different decoden commands
+
 Run DecoDen with the following command. 
 
 ```bash
-python run.py -i samples.csv -o results_dir
+decoden run consolidate -i "samples.csv" -o "output_directory" -bs 200 -n 2 \
+    --control_condition "control" \
+    --out_dir "output_directory" \
+    --blacklist_file "hg19-blacklist.v2.bed" \
+    --plotting
 ```
 
-The output from DecoDen will be written into `HSR_results.ftr` in the output directory. To inspect results - 
+The output from DecoDen will be written into `HSR_results_consolidated.ftr` in the output directory. To inspect results - 
 
 ```python
 import pandas as pd
-hsr_results = pd.read_feather('HSR_results.ftr')
+hsr_results = pd.read_feather('HSR_results_consolidated.ftr')
 ```
 
 #### List of options
@@ -56,10 +66,7 @@ If you would prefer to run preprocessing and DecoDen separately, use the followi
 Pre-processing includes removing duplicate reads, extending reads and tiling the data into bins. These steps require MACS2, BEDOPS and BEDTools.
 
 ```bash
-decoden preprocess -i "samples.csv" \ # CSV file with filepath and conditions
-                         -o "output_directory" \ # directory for preprocessed files
-                         -bs 200 \ # bin size for tiling (default 200)
-                         -n 2 \ # number of jobs for parallelization (default 1)
+decoden preprocess -i "samples.csv" -o "output_directory" -bs 200 -n 2
 ```
 The sample CSV file should contain `filepath`, `exp_name` and `is_control` columns. For an example look under `utils/samples.csv`. Preprocessed data will be written to `data` folder in the output directory.
 
@@ -84,18 +91,11 @@ To run DecoDen, the data must be preprocessed into bedGraph format and binned co
 
 To run DecoDen, an example command would be:
 ```bash
-python run_decoden --data_folder "data/my_experiment" \ # where the .bdg files are saved
-                   --output_folder "outputs/my_experiment_results" \ # where to save the results
-                   --files_reference "data/my_experiment_files.json" \ # the aforementioned mapping
-                   --blacklist_file "data/annotations/hg19-blacklist.v2.bed" \
-                   --conditions "control" "H3K27me3" "H3K4me3" \ # Ordering of the experimental conditions. The first one must be the control.
-                   --control_cov_threshold 1.0 \ # Minimum coverage for the training data for the NMF
-                   --n_train_bins 300000 \ # Number of training bins for the extraction of the mixing matrix
-                   --chunk_size 100000 \ # For the processing of the signal matrix
-                   --seed 42 \ # Random state for reproductibility
-                   --alpha_W 0.01 \ # Regularisation for the signal matrix
-                   --alpha_H 0.001 \ # Regularisation for the mixing matrix
-
+decoden run consolidate -i "samples.csv" -o "output_directory" -bs 200 -n 2 \
+    --control_condition "control" \
+    --out_dir "output_directory" \
+    --blacklist_file "hg19-blacklist.v2.bed" \
+    --plotting
 ```
 
 Results are written to `HSR_results.ftr` in the output directory. NMF signal matrix and mixing matrix are in `NMF`. For a sanity check, you can inspect the figures `mixing_matrix.pdf` and `signal_matrix_sample.pdf`. 
