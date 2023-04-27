@@ -28,6 +28,8 @@ def filter_duplicate_reads(filename, out_dir, name):
     logger.info(f'Filtered filepath will be {out_filepath}')
 
     subprocess.run(f"macs2 filterdup -i {filename} --keep-dup=1 -o {out_filepath}", shell=True)
+    assert os.path.exists(out_filepath), f"File {out_filepath} not generated"
+    
     return out_filepath
 
 def extend_reads(filepath, extend_length, is_control=0):
@@ -67,6 +69,8 @@ def get_fragment_length(filtered_filepath, output_dir):
         int: estimated fragment length
     """
     logger.info(f'Getting fragment length for {filtered_filepath}')
+    
+    assert os.path.exists(filtered_filepath), f"File {filtered_filepath} not found"
 
     result = subprocess.run(f'macs2 predictd -i {filtered_filepath} -g hs -m 5 50 --outdir {output_dir}', capture_output=True, text=True, shell=True)
     try:

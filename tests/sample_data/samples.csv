@@ -1,7 +1,7 @@
-filepath,exp_name,is_control
-wce/ENCFF234NNJ_chr21.bam,control,1
-wce/ENCFF346JZT_chr21.bam,control,1
-h3k4me3/ENCFF404DOT_chr21.bam,h3k4me3,0
-h3k4me3/ENCFF779XRN_chr21.bam,h3k4me3,0
-h3k27me3/ENCFF623DRR_chr21.bam,h3k27me3,0
-h3k27me3/ENCFF228ABC_chr21.bam,h3k27me3,0
+filepath,exp_name,is_control,replicate,cell_type,sample_label
+wce/ENCFF234NNJ_chr21.bam,control,1,1,transverse colon,MySample1_WCE
+wce/ENCFF346JZT_chr21.bam,control,1,2,transverse colon,MySample1_WCE
+h3k4me3/ENCFF404DOT_chr21.bam,h3k4me3,0,1,transverse colon,MySample2_H3K4me3
+h3k4me3/ENCFF779XRN_chr21.bam,h3k4me3,0,2,transverse colon,MySample2_H3K4me3
+h3k27me3/ENCFF623DRR_chr21.bam,h3k27me3,0,1,transverse colon,MySample3_H3K27me3
+h3k27me3/ENCFF228ABC_chr21.bam,h3k27me3,0,2,transverse colon,MySample3_H3K27me3

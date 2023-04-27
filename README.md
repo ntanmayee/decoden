@@ -146,18 +146,23 @@ The annotations .csv must contain the following columns:
 | `filepath` | the path pointing to the .bam file for the sample. It can be either an absolute path, or a relative path from the directory where the .csv file is saved |
 | `exp_name` | the label for the histone modification corresponding to the sample (e.g. "control", "H3K4me3") |
 | `is_control` | a binary indicator to mark the control/input samples. It should be 1 for the control samples and 0 for the treatment samples |
+| `replicate` | the numbering of the replicate corresponding to the samples. For N replicates corresponding to the same condition (`exp_name`) it should not present repeated values.
+| `cell_type` | the cell type of the sample assayed. Used to generate the output file names if `sample_label` is not provided.
+| `sample_label` (OPTIONAL) | if provided, it is used to name the output files corresponding to the sample.
+
 
 **TODO: additional columns?**
 
 An example of a suitable annotation .csv is as follows:
-|filepath                      |exp_name|is_control|
-|------------------------------|--------|----------|
-|wce/ENCFF234NNJ_chr21.bam     |control |1         |
-|wce/ENCFF346JZT_chr21.bam     |control |1         |
-|h3k4me3/ENCFF404DOT_chr21.bam |h3k4me3 |0         |
-|h3k4me3/ENCFF779XRN_chr21.bam |h3k4me3 |0         |
-|h3k27me3/ENCFF623DRR_chr21.bam|h3k27me3|0         |
-|h3k27me3/ENCFF228ABC_chr21.bam|h3k27me3|0         |
+
+|filepath                      |exp_name|is_control|replicate|cell_type       |sample_label      |
+|------------------------------|--------|----------|---------|----------------|------------------|
+|wce/ENCFF234NNJ_chr21.bam     |control |1         |1        |transverse colon|MySample1_WCE     |
+|wce/ENCFF346JZT_chr21.bam     |control |1         |2        |transverse colon|MySample1_WCE     |
+|h3k4me3/ENCFF404DOT_chr21.bam |h3k4me3 |0         |1        |transverse colon|MySample2_H3K4me3 |
+|h3k4me3/ENCFF779XRN_chr21.bam |h3k4me3 |0         |2        |transverse colon|MySample2_H3K4me3 |
+|h3k27me3/ENCFF623DRR_chr21.bam|h3k27me3|0         |1        |transverse colon|MySample3_H3K27me3|
+|h3k27me3/ENCFF228ABC_chr21.bam|h3k27me3|0         |2        |transverse colon|MySample3_H3K27me3|
 
 
 
@@ -167,7 +172,7 @@ All the results produced by DecoDen are saved in the output directory specified 
 
 The *NMF* folder contains the intermediate results produced by the factorization step. Optionally, with the `--plotting` argument several plots for the extracted matrices are produced. This step is a valuable sanity check to verify the choice of regularization parameters.
 
-The *bedgraph_files* directory contains the outputs of DecoDen for each histone modification (if run in `consolidate` mode) or for each replicate (if run in `replicates` mode) in .bdg files. These files can directly be uploaded to the [UCSC Genome Browser](https://genome.ucsc.edu/) for visualization.
+The *output_bedgraph_files* directory contains the outputs of DecoDen for each histone modification (if run in `consolidate` mode) or for each replicate (if run in `replicates` mode) in .bdg files. These files can directly be uploaded to the [UCSC Genome Browser](https://genome.ucsc.edu/) for visualization.
 
 
 The full set of results is gathered in a single dataframe called `HSR_results_consolidated.ftr` or `HSR_results_replicates.ftr` depending on the mode. The columns named `... HSR Value` contain the denoised signals produced by DecoDen. 

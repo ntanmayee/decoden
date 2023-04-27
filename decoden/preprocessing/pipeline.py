@@ -63,39 +63,38 @@ def make_args(input_csv, out_dir, bin_size):
             filepath = join(input_dirname, filepath)
         
         arg_list.append(
-            (
-                filepath,
-                row.exp_name,
-                out_dir,
-                row.is_control,
-                bin_size
-            )
+            {
+                "filepath": filepath,
+                "sample_name": row.exp_name,
+                "out_dir": out_dir,
+                "is_control": row.is_control,
+                "bin_size": bin_size
+            }
         )
         
     logger.debug(arg_list)
     return arg_list
 
-def run_single(args):
-    """Run preprocessing pipeline for single sample
 
-    Args:
-        args (tuple): list of args for each sample. The parameters are in this order - filepath, exp_name, out_dir, is_control, bin_size
 
-    Returns:
-        tuple: (tiled_filepath, name) - filepath to the processed file and the unique name of the sample.
-    """
-    logger.info(f'Running pipeline for {args}')
-    input_filepath, name, out_dir, is_control, bin_size = args
 
-    files = os.listdir(os.path.join(out_dir, 'data'))
-    tiled_filepath = os.path.splitext(os.path.basename(input_filepath))[0] + "_filterdup_pileup_tiled.bed"
+def check_csv_file(input_csv):
+    assert os.path.exists(input_csv), f"Annotation file {input_csv} not found"
     
-    if tiled_filepath not in files: 
-        tiled_filepath = run_pipeline(input_filepath, name, out_dir, is_control, bin_size)
-    else:
-        logger.info(f'Skipping {input_filepath} as output already exists.')
-
-    return (tiled_filepath, name)
+    input_data = read_csv(input_csv)
+    assert len(input_data)>0, "Annotation .csv empty"
+    
+    n_cols = len(input_data.columns)
+    # assert n_cols in [5, 6], "Invalid number of columns"
+    for col in ["filepath", "exp_name", "is_control", "replicate", "cell_type"]:
+        assert col in input_data.columns, f"Annotation .csv requires `{col}` column"
+    if n_cols==6:
+        assert "sample_label" in input_data.columns, "Optional labelling column must be `sample_label`"
+        
+    assert len(input_data[input_data["is_control"]==1]["exp_name"].unique())>0, "Specify at least one control condition"
+    assert len(input_data[input_data["is_control"]==1]["exp_name"].unique())<2, "Multiple control labels not allowed"
+    
+   
 
 def write_json(tiled_files, out_dir):
     """write `experiment_conditions.json` to output directory. This file is required to run DecoDen later.
@@ -109,6 +108,35 @@ def write_json(tiled_files, out_dir):
     json_obj = {os.path.join('data', os.path.basename(a[0])): a[1] for a in tiled_files}
     json.dump(json_obj, open(out_filename, 'w'), indent=1)
 
+
+def run_single(args):
+    """Run preprocessing pipeline for single sample
+
+    Args:
+        args (tuple): list of args for each sample. The parameters are in this order - filepath, exp_name, out_dir, is_control, bin_size
+
+    Returns:
+        tuple: (tiled_filepath, name) - filepath to the processed file and the unique name of the sample.
+    """
+    logger.info(f'Running pipeline for {args}')
+    input_filepath = args["filepath"]
+    sample_name = args["sample_name"]
+    out_dir = args["out_dir"]
+    is_control = args["is_control"]
+    bin_size = args["bin_size"]
+    
+    files = os.listdir(os.path.join(out_dir, 'data'))
+    tiled_filepath = os.path.splitext(os.path.basename(input_filepath))[0] + "_filterdup_pileup_tiled.bed"
+    
+    if tiled_filepath not in files: 
+        assert os.path.exists(input_filepath), f"File {input_filepath} not found"
+        tiled_filepath = run_pipeline(input_filepath, sample_name, out_dir, is_control, bin_size)
+    else:
+        logger.info(f'Skipping {input_filepath} as output already exists.')
+
+    return (tiled_filepath, sample_name)
+
+
 def run_preprocessing(input_csv, bin_size, num_jobs, out_dir):
     """Run DecoDen for all samples. This is supposed to be parallel, but currently it is not working. 
 
@@ -121,6 +149,8 @@ def run_preprocessing(input_csv, bin_size, num_jobs, out_dir):
     Returns:
         list: list of tuples (tiled_filepath, name). `tiled_filepath` is the path to the processed file.
     """
+    check_csv_file(input_csv)    
+    
     arg_list = make_args(input_csv, out_dir, bin_size)
 
     Path(out_dir, 'data').mkdir(parents=True, exist_ok=True)
