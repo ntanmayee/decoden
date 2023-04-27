@@ -11,7 +11,7 @@ Details about DecoDen are in the paper [**Multi-histone ChIP-Seq Analysis with D
 
 ## Installation
 
-DecoDen is available as a python package on PyPi and Bioconda. To ensure the dependencies are satisfied with the correct package version, we recommend the use of [Anaconda](https://www.anaconda.com/) to create suitable environment. Alternative solutions like [https://virtualenv.pypa.io/en/latest/](Virtualenv) and [Poetry](https://python-poetry.org/) work as well, however you will need to ensure the installation of the external dependencies [BEDOPS](https://github.com/bedops/bedops) and [bedtools](https://github.com/arq5x/bedtools2).
+DecoDen is available as a python package on PyPi and Bioconda (**SOON**). To ensure the dependencies are satisfied with the correct package version, we recommend the use of [Anaconda](https://www.anaconda.com/) to create suitable environment. Alternative solutions like [https://virtualenv.pypa.io/en/latest/](Virtualenv) and [Poetry](https://python-poetry.org/) work as well, however you will need to ensure the installation of the external dependencies [BEDOPS](https://github.com/bedops/bedops) and [bedtools](https://github.com/arq5x/bedtools2).
 
 ### Temporary development instructions
 
