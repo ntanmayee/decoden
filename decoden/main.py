@@ -25,13 +25,6 @@ app.add_typer(denoise_app, name="denoise")
 app.add_typer(run_app, name="run")
 
 
-@app.callback()
-def callback():
-    """
-    Multi-condition ChIP-Seq Analysis with DecoDen
-    """
-    print_message()
-
 
 def version_callback(value: bool):
     if value:
@@ -40,11 +33,12 @@ def version_callback(value: bool):
 
 
 @app.callback()
-def main(
-    version: bool = typer.Option(
-        None, "--version", callback=version_callback, is_eager=True, help="Display DecoDen version"),
-):
-    return
+def callback(version: bool = typer.Option(
+        None, "--version", callback=version_callback, is_eager=True, help="Display DecoDen version"),):
+    """
+    Multi-condition ChIP-Seq Analysis with DecoDen
+    """
+    print_message()
 
 
 @app.command("preprocess")
