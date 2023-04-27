@@ -74,7 +74,8 @@ def make_args(input_csv, out_dir, bin_size):
                 "sample_name": sample_name,
                 "out_dir": out_dir,
                 "is_control": row.is_control,
-                "bin_size": bin_size
+                "bin_size": bin_size,
+                "replicate": row.replicate
             }
         )
         
@@ -112,6 +113,7 @@ def run_single(args):
     out_dir = args["out_dir"]
     is_control = args["is_control"]
     bin_size = args["bin_size"]
+    replicate = args["replicate"]
     
     files = os.listdir(os.path.join(out_dir, 'data'))
     tiled_filepath = sample_name + "_filterdup_pileup_tiled.bed"
@@ -122,7 +124,7 @@ def run_single(args):
     else:
         logger.info(f'Skipping {input_filepath} as output already exists.')
 
-    return (tiled_filepath, exp_name)
+    return (tiled_filepath, [exp_name, replicate])
 
 
 def run_preprocessing(input_csv, bin_size, num_jobs, out_dir):

@@ -57,9 +57,9 @@ def load_files(files_ref, data_folder, sample_conditions):
     conditions_counts = {c: 0 for c in sample_conditions}
 
     data = None
-    for fname, c in tqdm(files_ref.items()):
+    for fname, (c, rep) in tqdm(files_ref.items()):
         conditions_counts[c] += 1    
-        colname = c+"_"+str(conditions_counts[c])
+        colname = c+"_"+str(rep)
         df = pd.read_csv(os.path.join(data_folder, fname), sep="\t", names=["seqnames", "start", "end", colname])
         df.set_index(["seqnames", "start", "end"], inplace=True)
         if data is None:
@@ -82,10 +82,9 @@ def extract_conditions(json_file, control_label="control"):
     json_object = json.load(open(json_file))
     
     conditions = []
-    for key in json_object:
-        value = json_object[key]
-        if value not in conditions:
-            conditions.append(value)
+    for k, v in json_object.items():
+        if v[0] not in conditions:
+            conditions.append(v[0])
             
     if not control_label in conditions:
         raise Exception("Invalid label for control condition")
@@ -105,6 +104,7 @@ def save_hsr_output(hsr_df, out_dir, label=""):
     cols = [c for c in hsr_df.columns if c.endswith("HSR Value")]
     
     r = lambda: random.randint(0, 255) 
+    # filenames = {}
     for c in tqdm(cols):
         track = c.split(" HSR")[0]
         

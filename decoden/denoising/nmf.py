@@ -237,7 +237,7 @@ def run_NMF(files_reference,
         files = json.load(f)
         
     data_folder = os.path.dirname(files_reference) 
-    assert set(conditions) == set([files[i] for i in files]), 'Conditions do not match conditions in reference file. Perhaps there is an error in `--conditions` argument?'
+    assert set(conditions) == set([v[0] for v in files.values()]), 'Conditions do not match conditions in reference file. Perhaps there is an error in `--conditions` argument?'
     if not exists(output_folder):
         os.makedirs(output_folder)
 
@@ -264,7 +264,7 @@ def run_NMF(files_reference,
     nmf_folder = join(output_folder, "NMF")
 
     # skip NMF step if already computed
-    if Path(join(nmf_folder, "mixing_matrix.csv")).exists(): # and Path(join(nmf_folder, "mixing_matrix.pdf")).exists():
+    if Path(join(nmf_folder, "mixing_matrix.csv")).exists()  and Path(join(nmf_folder, "signal_matrix.ftr")).exists():
         print('`NMF` directory found. Using existing NMF results')
         mmatrix = pd.read_csv(join(nmf_folder, "mixing_matrix.csv"), index_col=0)
         wmatrix = pd.read_feather(join(nmf_folder, "signal_matrix.ftr"))
