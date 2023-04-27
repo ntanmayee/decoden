@@ -118,6 +118,7 @@ def run_pipeline(input_filepath, name, out_dir, is_control, bin_size):
         string: path to preprocssed file
     """
     logger.info(f'Running preprocessing pipeline for {input_filepath}')
+    assert os.path.exists(input_filepath), f"File {input_filepath} not found"
 
     filterdup_filepath = filter_duplicate_reads(input_filepath, out_dir, name)
     fragment_length = get_fragment_length(filterdup_filepath, out_dir)
