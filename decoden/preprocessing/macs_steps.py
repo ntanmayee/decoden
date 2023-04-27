@@ -20,11 +20,6 @@ def filter_duplicate_reads(filename, out_dir, name):
         _type_: _description_
     """
     logger.info(f'Filtering duplicate reads for {filename}')
-    
-    # data_dir = os.path.join()
-    # os.makedirs(data_dir, exist_ok=True)
-
-    # out_filepath = os.path.join(out_dir, 'data', os.path.splitext(os.path.basename(filename))[0] + '_filterdup.bed')
     out_filepath = os.path.join(out_dir, 'data', name + '_filterdup.bed')
     
     logger.info(f'Filtered filepath will be {out_filepath}')

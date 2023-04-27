@@ -31,7 +31,6 @@ def read_csv(input_csv_filepath):
     assert len(input_csv)>0, "Annotation .csv empty"
     
     n_cols = len(input_csv.columns)
-    # assert n_cols in [5, 6], "Invalid number of columns"
     for col in ["filepath", "exp_name", "is_control", "replicate", "cell_type"]:
         assert col in input_csv.columns, f"Annotation .csv requires `{col}` column"
     if n_cols==6:
@@ -113,7 +112,6 @@ def run_single(args):
     bin_size = args["bin_size"]
     
     files = os.listdir(os.path.join(out_dir, 'data'))
-    # tiled_filepath = os.path.splitext(os.path.basename(input_filepath))[0] + "_filterdup_pileup_tiled.bed"
     tiled_filepath = sample_name + "_filterdup_pileup_tiled.bed"
     
     if tiled_filepath not in files: 
