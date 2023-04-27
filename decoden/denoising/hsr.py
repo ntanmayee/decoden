@@ -44,7 +44,7 @@ def run_HSR(wmat, bl_mask, conditions_list, eps=1e-20):
 #         track = np.exp(treatment_transf+mean_treatment_transf-log_pred)
         track = np.exp(treatment_transf-log_pred)
         out_df[treatment_cond+" HSR Value"] = track
-        out_df[treatment_cond+" fit"] = pred
+        # out_df[treatment_cond+" fit"] = pred
 
     return out_df
 
@@ -98,7 +98,7 @@ def run_HSR_replicates(replicates, wmat, mmat, bl_mask, conditions_list, conditi
     #         track = np.exp(treatment_transf+mean_treatment_transf-log_pred)
         track = np.exp(treatment_transf-log_pred)
         out_df[treatment_sample+" HSR Value"] = track
-        out_df[treatment_sample+" fit"] = pred
+        # out_df[treatment_sample+" fit"] = pred
 
     
     return out_df

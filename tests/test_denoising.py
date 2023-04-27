@@ -78,7 +78,7 @@ def test_hsr_consolidated_results_saved(tmp_session_directory, bl_file):
         plotting=plotting
     )
 
-    bdg_folder = join(out_dir, "bedgraph_files")
+    bdg_folder = join(out_dir, "output_bedgraph_files")
     assert exists(bdg_folder)
     assert exists(join(out_dir, "HSR_results_consolidate.ftr"))
 
@@ -111,6 +111,6 @@ def test_nmf_hsr_replicates_results_saved(tmp_session_directory, bl_file):
     )
         
 
-    bdg_folder = join(out_dir, "bedgraph_files")
+    bdg_folder = join(out_dir, "output_bedgraph_files")
     assert exists(bdg_folder)
     assert exists(join(out_dir, "HSR_results_replicates.ftr"))

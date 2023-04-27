@@ -71,7 +71,7 @@ def load_files(files_ref, data_folder, sample_conditions):
 
 
 def extract_conditions(json_file, control_label="control"):
-    """Extract list of different experimental conditions, to pass to run_decoden.py. Assumes that `control` is the first condition.
+    """Extract list of different experimental conditions, to pass to run_decoden.py.
 
     Args:
         json_file (string): path to `experiment_conditions.json` generated from run_preprocess.py
@@ -98,9 +98,9 @@ def save_hsr_output(hsr_df, out_dir, label=""):
     print("\nSaving HSR output")
     hsr_df.reset_index().to_feather(join(out_dir, f"HSR_results{label}.ftr"))
     
-    # TODO: compress bergraph
+    # TODO: compress bedgraph
     
-    bedgraph_dir = join(out_dir, "bedgraph_files")
+    bedgraph_dir = join(out_dir, "output_bedgraph_files")
     os.makedirs(bedgraph_dir, exist_ok=True)
     cols = [c for c in hsr_df.columns if c.endswith("HSR Value")]
     
