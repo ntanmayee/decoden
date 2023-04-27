@@ -48,77 +48,42 @@ decoden --help
 ```
 
 
+## Decoden Pipeline
 
+DecoDen is employed to denoise ChIP-seq experiments, starting from *.bam* files.
+The pipeline involves three main steps, which can be run separately or all at once: preprocessing, denoising, and peak calling.
 
+In the *preprocessing* setp, the *.bam* files are processed to filted duplicate reads, extend reads and finally tile the measured counts to obtain a binned signal. DecoDen makes use of the external tools BEDOPS, bedtools, and some preprocessing functionalities from MACS2.
 
-## Quick Start
-### Prepare data
+This functionality is covered by the `decoden preprocess` command:
 
+```sh
+# Print the possible arguments for the preprocess command
+decoden preprocess --help
 
-
-Create a CSV file with details about samples. DecoDen expects aligned reads in BED/BAM format.  The sample CSV file must contain `filepath`, `exp_name` and `is_control` columns. For an example look under [`tests/sample_data/samples.csv`](https://github.com/ntanmayee/DecoDen/blob/cline/tests/sample_data/samples.csv). 
-
-### Running DecoDen
-
-*TODO* add description of different decoden commands
-
-Run DecoDen with the following command. 
-
-```bash
-decoden run consolidate -i "samples.csv" -o "output_directory" -bs 200 -n 2 \
-    --control_condition "control" \
-    --out_dir "output_directory" \
-    --blacklist_file "hg19-blacklist.v2.bed" \
-    --plotting
+# Example of a call to run the preprocessing step
+decoden preprocess -i "samples.csv" -o "output_directory" -bs 200 -n 1
 ```
 
-The output from DecoDen will be written into `HSR_results_consolidated.ftr` in the output directory. To inspect results - 
 
-```python
-import pandas as pd
-hsr_results = pd.read_feather('HSR_results_consolidated.ftr')
-```
+The *denoising* procedure is the core of the DecoDen algorithm. It involves a sequential use of Non-negative Matrix Factorization (NMF) and Half-Sibling Regression (HSR).
+The denoising step is available with two distinct functionalities: **denoise consolidate** performs the two aforementioned steps to generate a consolidated signal for each experimental condition (i.e. histone modification), while **denoise replicates** results in an adjusted signal for each input replicate. 
 
-#### List of options
-| Parameter | Description |
-|---|---|
-| `-i INPUT_CSV, --input_csv` | path to CSV file with information about experimental conditions. Must contain `filepath`, `exp_name` and `is_control` columns. Control/input should be the first condition. Input files can be in BED/BAM format. |
-| `-bs BIN_SIZE, --bin_size BIN_SIZE` | size of genomic bin for tiling. Recommended value is 10-200. Smaller bin size increases space and runtime, larger binsizes may occlude small variations. Default: 200 |
-| `-n NUM_JOBS, --num_jobs NUM_JOBS` | Number of parallel jobs for preprocessing. Default: 1 |
-| `-o OUT_DIR, --out_dir OUT_DIR` | path to directory where all output files will be written |
-| `-bl BLACKLIST_FILE, --blacklist_file BLACKLIST_FILE` | path to blacklist file |
-| `--control_cov_threshold CONTROL_COV_THRESHOLD` | Threshold for coverage in control samples. Only genomic bins above this threshold will be used. It is recommended to choose a value larger than 1/bin_size. |
-| `--n_train_bins N_TRAIN_BINS` | Number of genomic bins to be used for training |
-| `--chunk_size CHUNK_SIZE` | Chunk size for processing the signal matrix. Should be smaller than `n_train_bins` |
-| `--seed SEED` | Random state for reproducability |
-| `--alpha_W ALPHA_W` | Regularisation for the signal matrix |
-| `--alpha_H ALPHA_H` | Regularisation for the mixing matrix |
+This process is available through the commands `decoden denoise consolidate` and `decoden denoise replicates`:
 
-## Running DecoDen
+```sh
+# Print the possible arguments for the denoising commands
+decoden denoise conoslidate --help
+decoden denoise replicates --help
 
-The decoden pipeline involves three main steps: preprocessing of data, denoising, and detection.
 
-To run each part of decoden separately use the following commands:
-
-### Preprocessing
-Pre-processing includes removing duplicate reads, extending reads and tiling the data into bins. These steps require MACS2, BEDOPS and BEDTools.
-
-```bash
-decoden preprocess -i "samples.csv" -o "output_directory" -bs 200 -n 2
-```
-The sample CSV file should contain `filepath`, `exp_name` and `is_control` columns. For an example look under `utils/samples.csv`. Preprocessed data will be written to `data` folder in the output directory.
-
-### Denoising
-
-```bash
+# Example of calls to denoise the preprocessed data
 decoden denoise consolidate --files_reference "output_directory/experiment_conditions.json" \
         --control_label "control" \
         --out_dir "output_directory" \
         --blacklist_file "data/annotations/hg19-blacklist.v2.bed" \
         --plotting
-```
 
-```bash
 decoden denoise replicates --files_reference "output_directory/experiment_conditions.json" \
         --control_label "control" \
         --out_dir "output_directory" \
@@ -126,60 +91,95 @@ decoden denoise replicates --files_reference "output_directory/experiment_condit
         --plotting
 ```
 
+Finally, the peak calling step is available only for signals processed using the **denoise replicates** command, as it requires multiple replicates for statistical hypothesis testing. 
 
- ### Peak Detection
+To run the detection process use the command `decoden detect`:
 
+```sh
+# Print the possible arguments for the preprocess command
+decoden detect --help
 
-   TODO
-
- ### Pipeline
-
-```bash
-decoden run consolidate -i "samples.csv" -o "output_directory" -bs 200 -n 2 \
-        --control_label "control" \
-        --out_dir "output_directory" \
-        --blacklist_file "data/annotations/hg19-blacklist.v2.bed" \
-        --plotting
+#TODO example
 ```
 
-```bash
+
+The full DecoDen pipeline can be run using the `decoden run` command, which is available in the two modalities for consolidation or adjusting individual replicates:
+
+
+```sh
+# Print the possible arguments for the complete pipeline commands
+decoden run conoslidate --help
+decoden run replicates --help
+
+
+# Example of calls to run the full DecoDen pipeline
+decoden run consolidate -i "samples.csv" -o "output_directory" -bs 200 -n 2 \
+    --control_condition "control" \
+    --out_dir "output_directory" \
+    --blacklist_file "hg19-blacklist.v2.bed" \
+    --plotting
+
 decoden run replicates -i "samples.csv" -o "output_directory" -bs 200 -n 2 \
-        --control_label "control" \
-        --out_dir "output_directory" \
-        --blacklist_file "data/annotations/hg19-blacklist.v2.bed" \
-        --plotting
-```
-
-
-### Running DecoDen
-
-To run DecoDen, the data must be preprocessed into bedGraph format and binned correctly. The algorithm requires a `json` file that indicates the correspondance of each file to the experimental condition.
-
-**If you used `DecoDen` for preprocessing, this file is automatically generated for you. It will called `experiment_conditions.json` in the output folder.**
-
-```javascript
-{
-    "control_1.bdg": "control",
-    "control_2.bdg": "control",
-    "h3k27me3_1.bdg": "H3K27me3",
-    "h3k27me3_2.bdg": "H3K27me3",
-    "h3k27me3_3.bdg": "H3K27me3",
-    "h3k4me3_1.bdg": "H3K4me3",
-    "h3k4me3_2.bdg": "H3K4me3",
-    "h3k4me3_3.bdg": "H3K4me3"
-}
-```
-
-To run DecoDen, an example command would be:
-```bash
-decoden run consolidate -i "samples.csv" -o "output_directory" -bs 200 -n 2 \
     --control_condition "control" \
     --out_dir "output_directory" \
     --blacklist_file "hg19-blacklist.v2.bed" \
     --plotting
 ```
 
-Results are written to `HSR_results.ftr` in the output directory. NMF signal matrix and mixing matrix are in `NMF`. For a sanity check, you can inspect the figures `mixing_matrix.pdf` and `signal_matrix_sample.pdf`. 
+
+
+## Quick Start
+
+### Input data
+
+**TODO: Is .bed also acceptable for input?**
+
+Running decoden requires three inputs:
+- The *.bam* files for your ChIP-seq experiments
+- A file with the annotations for the .bam files in *.csv* format
+- (Optional) a *.bed* file with the blacklisted regions to exclude for the target genome alignment
+
+The annotations .csv must contain the following columns:
+
+| Column | Description |
+|---|---|
+| `filepath` | the path pointing to the .bam file for the sample. It can be either an absolute path, or a relative path from the directory where the .csv file is saved |
+| `exp_name` | the label for the histone modification corresponding to the sample (e.g. "control", "H3K4me3") |
+| `is_control` | a binary indicator to mark the control/input samples. It should be 1 for the control samples and 0 for the treatment samples |
+
+**TODO: additional columns?**
+
+An example of a suitable annotation .csv is as follows:
+|filepath                      |exp_name|is_control|
+|------------------------------|--------|----------|
+|wce/ENCFF234NNJ_chr21.bam     |control |1         |
+|wce/ENCFF346JZT_chr21.bam     |control |1         |
+|h3k4me3/ENCFF404DOT_chr21.bam |h3k4me3 |0         |
+|h3k4me3/ENCFF779XRN_chr21.bam |h3k4me3 |0         |
+|h3k27me3/ENCFF623DRR_chr21.bam|h3k27me3|0         |
+|h3k27me3/ENCFF228ABC_chr21.bam|h3k27me3|0         |
+
+
+
+### DecoDen outputs
+
+All the results produced by DecoDen are saved in the output directory specified through the `-o` option.
+
+The *NMF* folder contains the intermediate results produced by the factorization step. Optionally, with the `--plotting` argument several plots for the extracted matrices are produced. This step is a valuable sanity check to verify the choice of regularization parameters.
+
+The *bedgraph_files* directory contains the outputs of DecoDen for each histone modification (if run in `consolidate` mode) or for each replicate (if run in `replicates` mode) in .bdg files. These files can directly be uploaded to the [UCSC Genome Browser](https://genome.ucsc.edu/) for visualization.
+
+
+The full set of results is gathered in a single dataframe called `HSR_results_consolidated.ftr` or `HSR_results_replicates.ftr` depending on the mode. The columns named `... HSR Value` contain the denoised signals produced by DecoDen. 
+
+To inspect results use the pandas package: 
+
+```python
+import pandas as pd
+hsr_results = pd.read_feather('HSR_results_consolidated.ftr')
+```
+
+
 
 ## Bug Reports and Suggestions for Improvement
 Please [raise an issue](https://github.com/ntanmayee/DecoDen/issues/new) if you find bugs or if you have any suggestions for improvement.
