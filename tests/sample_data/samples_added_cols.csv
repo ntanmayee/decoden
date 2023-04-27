@@ -1,7 +1,7 @@
 filepath,exp_name,is_control,sample_label,replicate,tissue
-data/wce/ENCFF234NNJ_chr21.bam,control,1,,1,
-data/wce/ENCFF346JZT_chr21.bam,control,1,,2,
-data/h3k4me3/ENCFF404DOT_chr21.bam,h3k4me3,0,,1,
-data/h3k4me3/ENCFF779XRN_chr21.bam,h3k4me3,0,,2,
-data/h3k27me3/ENCFF623DRR_chr21.bam,h3k27me3,0,,1,
-data/h3k27me3/ENCFF228ABC_chr21.bam,h3k27me3,0,,2,
+data/wce/ENCFF234NNJ_chr21.bam,control,1,MySample1_WCE,1,transverse colon
+data/wce/ENCFF346JZT_chr21.bam,control,1,MySample1_WCE,2,transverse colon
+data/h3k4me3/ENCFF404DOT_chr21.bam,h3k4me3,0,MySample2_H3K4me3,1,transverse colon
+data/h3k4me3/ENCFF779XRN_chr21.bam,h3k4me3,0,MySample2_H3K4me3,2,transverse colon
+data/h3k27me3/ENCFF623DRR_chr21.bam,h3k27me3,0,MySample3_H3K27me3,1,transverse colon
+data/h3k27me3/ENCFF228ABC_chr21.bam,h3k27me3,0,MySample3_H3K27me3,2,transverse colon

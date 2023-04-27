@@ -4,22 +4,58 @@
 
 ![DecoDen Schematic](utils/decoden_schematic.png "DecoDen")
 
-DecoDen uses replicates and multi-histone ChIP-Seq experiments for a fixed cell type to learn and remove shared biases from fragmentation, PCR amplification and seqeunce mappability. 
+DecoDen uses replicates and multi-histone ChIP-Seq experiments for a target cell type to learn and remove shared biases from fragmentation, PCR amplification and seqeunce mappability. 
 
 Details about DecoDen are in the paper [**Multi-histone ChIP-Seq Analysis with DecoDen**](https://www.biorxiv.org/content/10.1101/2022.10.18.512665v1).
 
 
-## Dependencies
-DecoDen depends on MACS2, BEDOPS and BEDTools for data pre-processing.
+## Installation
+
+DecoDen is available as a python package on PyPi and Bioconda. To ensure the dependencies are satisfied with the correct package version, we recommend the use of [Anaconda](https://www.anaconda.com/) to create suitable environment. Alternative solutions like [https://virtualenv.pypa.io/en/latest/](Virtualenv) and [Poetry](https://python-poetry.org/) work as well, however you will need to ensure the installation of the external dependencies [BEDOPS](https://github.com/bedops/bedops) and [bedtools](https://github.com/arq5x/bedtools2).
+
+### Temporary development instructions
+
+Section to remove once the package is published. 
+Clone the github repository and run the following commands
+
 ```sh
-conda install -c bioconda macs2 bedops bedtools pandas tqdm joblib scikit-learn matplotlib seaborn
+# Create and activate the environment
+conda create -n dden python=3.9
+conda activate dden
+
+# Install the external dependencies and DecoDen
+conda install -c bioconda bedops bedtools
+
+# From the cloned folder
+poetry install
 ```
 
-*TODO* add package installation details
+
+### Setup with Conda
+
+To setup a suitable environment with Conda, use the following commands:
+```sh
+# Create and activate the environment
+conda create -n dden python=3.9
+conda activate dden
+
+# Install the external dependencies and DecoDen
+conda install -c bioconda bedops bedtools decoden
+
+# Verify the correct installation of DecoDen
+decoden --version
+decoden --help
+```
+
+
+
 
 
 ## Quick Start
 ### Prepare data
+
+
+
 Create a CSV file with details about samples. DecoDen expects aligned reads in BED/BAM format.  The sample CSV file must contain `filepath`, `exp_name` and `is_control` columns. For an example look under [`tests/sample_data/samples.csv`](https://github.com/ntanmayee/DecoDen/blob/cline/tests/sample_data/samples.csv). 
 
 ### Running DecoDen

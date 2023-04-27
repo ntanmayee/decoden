@@ -11,13 +11,14 @@ decoden = "decoden.__main__:app"
 
 [tool.poetry.dependencies]
 python = "^3.9"
-typer = {extras = ["all"], version = "^0.7.0"}
-MACS2 = "^2.2.6"
+joblib = "^1.2.0"
 numpy = "^1.24.2"
 pandas = "^2.0.0"
-matplotlib = "^3.7.1"
-scikit-learn = "^1.2.2"
 tqdm = "^4.65.0"
+scikit-learn = "^1.2.2"
+typer = {extras = ["all"], version = "^0.7.0"}
+MACS2 = "^2.2.6"
+matplotlib = "^3.7.1"
 seaborn = "^0.12.2"
 pyarrow = "^11.0.0"
 

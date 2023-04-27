@@ -13,17 +13,17 @@ from decoden.utils import print_message, extract_conditions
 from decoden.denoising.nmf import run_NMF
 from decoden.denoising.hsr import run_HSR, run_HSR_replicates
 
-# from decoden.apps.denoise_app import denoise_app
-# from decoden.apps.run_app import run_app
+
+__version__ = "0.1.0"
 
 app = typer.Typer()
 denoise_app = typer.Typer()
 run_app = typer.Typer()
 
 
-
 app.add_typer(denoise_app, name="denoise")
 app.add_typer(run_app, name="run")
+
 
 @app.callback()
 def callback():
@@ -31,63 +31,83 @@ def callback():
     Multi-condition ChIP-Seq Analysis with DecoDen
     """
     print_message()
-    
+
+
+def version_callback(value: bool):
+    if value:
+        typer.echo(f"DecoDen Version: {__version__}")
+        raise typer.Exit()
+
+
+@app.callback()
+def main(
+    version: bool = typer.Option(
+        None, "--version", callback=version_callback, is_eager=True, help="Display DecoDen version"),
+):
+    return
+
 
 @app.command("preprocess")
 def preprocess(
     input_csv: Optional[Path] = typer.Option(None, "--input_csv", "-i", help="""Path to CSV file with information about 
                                             experimental conditions. Must contain `filepath`, `exp_name` and `is_control` columns. 
-                                            Control/input should be the first condition. Input files can be in BED/BAM format."""), 
+                                            Control/input should be the first condition. Input files can be in BED/BAM format."""),
     bin_size: int = typer.Option(200, "--bin_size", "-bs", help="""Aize of genomic bin for tiling. 
                                 Recommended value is 10-200. Smaller bin size increases space and runtime, larger binsizes may occlude small variations. 
-                                """), 
-    num_jobs: int = typer.Option(1, "--num_jobs", "-n", help="Number of parallel jobs for preprocessing."), 
-    out_dir: Optional[Path] = typer.Option(None, "--out_dir", "-o", help="Path to directory where all output files will be written"), 
-    ):
+                                """),
+    num_jobs: int = typer.Option(
+        1, "--num_jobs", "-n", help="Number of parallel jobs for preprocessing."),
+    out_dir: Optional[Path] = typer.Option(
+        None, "--out_dir", "-o", help="Path to directory where all output files will be written"),
+):
     """
     Preprocess data to be in the correct format for DecoDen
     """
 
-    
     typer.echo("Preprocessing data")
-    
-    _decoden_pipeline(["preprocess"], 
-                      input_csv=input_csv, 
-                      bin_size=bin_size, 
-                      num_jobs=num_jobs, 
+
+    _decoden_pipeline(["preprocess"],
+                      input_csv=input_csv,
+                      bin_size=bin_size,
+                      num_jobs=num_jobs,
                       out_dir=out_dir)
-
-
-
 
 
 @denoise_app.command("consolidate")
 def denoise_consolidate(
-    # data_folder:  Optional[Path] = typer.Option(None, "--data_folder", "-df", help="Path to preprocessed data files in BED format"), 
+    # data_folder:  Optional[Path] = typer.Option(None, "--data_folder", "-df", help="Path to preprocessed data files in BED format"),
     files_reference: Optional[Path] = typer.Option(None, "--files_reference", "-f", help="""Path to JSON file with experiment conditions. 
-                        If you used DecoDen for pre-processing, use the `experiment_conditions.json` file"""), 
-    control_label: str  = typer.Option("control", "--control_label", "-con", help="The label for the control/input samples."), 
-    
-    # conditions: List[str] = typer.Option(None, "--conditions", "-c", help="List of experimental conditions. First condition MUST correspond to the control/input samples."), 
-    out_dir: Optional[Path] = typer.Option(None, "--out_dir", "-o", help="Path to directory where all output files will be written"), 
-    blacklist_file: Optional[Path] = typer.Option(None, "--blacklist_file", "-bl", help="Path to blacklist file. Make sure to use the blacklist that is appropriate for the genome assembly/organism."), 
-    alpha_W: float  = typer.Option(0.01, "--alpha_W", "-aW", help="Regularisation for the signal matrix."), 
-    alpha_H: float  = typer.Option(0.001, "--alpha_H", "-aH", help="Regularisation for the mixing matrix."), 
-    control_cov_threshold: float  = typer.Option(0.1, "--control_cov_threshold", "-cov", help="""Threshold for coverage in control samples. Only genomic bins above this threshold will be used. 
-                                It is recommended to choose a value larger than 1/bin_size."""), 
-    n_train_bins: int  = typer.Option(50000, "--n_train_bins", "-nt", help="Number of genomic bins to be used for training."), 
-    chunk_size: int  = typer.Option(50000, "--chunk_size", "-ch", help="Chunk size for processing the signal matrix. Should be smaller than `n_train_bins`."), 
-    seed: int  = typer.Option(0, "--seed", "-s", help="Random state."), 
-    plotting: bool  = typer.Option(False, "--plotting", "-p", help="Plot sanity checks for extracted matrices."), 
+                        If you used DecoDen for pre-processing, use the `experiment_conditions.json` file"""),
+    control_label: str = typer.Option(
+        "control", "--control_label", "-con", help="The label for the control/input samples."),
+
+    # conditions: List[str] = typer.Option(None, "--conditions", "-c", help="List of experimental conditions. First condition MUST correspond to the control/input samples."),
+    out_dir: Optional[Path] = typer.Option(
+        None, "--out_dir", "-o", help="Path to directory where all output files will be written"),
+    blacklist_file: Optional[Path] = typer.Option(
+        None, "--blacklist_file", "-bl", help="Path to blacklist file. Make sure to use the blacklist that is appropriate for the genome assembly/organism."),
+    alpha_W: float = typer.Option(
+        0.01, "--alpha_W", "-aW", help="Regularisation for the signal matrix."),
+    alpha_H: float = typer.Option(
+        0.001, "--alpha_H", "-aH", help="Regularisation for the mixing matrix."),
+    control_cov_threshold: float = typer.Option(0.1, "--control_cov_threshold", "-cov", help="""Threshold for coverage in control samples. Only genomic bins above this threshold will be used. 
+                                It is recommended to choose a value larger than 1/bin_size."""),
+    n_train_bins: int = typer.Option(
+        50000, "--n_train_bins", "-nt", help="Number of genomic bins to be used for training."),
+    chunk_size: int = typer.Option(
+        50000, "--chunk_size", "-ch", help="Chunk size for processing the signal matrix. Should be smaller than `n_train_bins`."),
+    seed: int = typer.Option(0, "--seed", "-s", help="Random state."),
+    plotting: bool = typer.Option(
+        False, "--plotting", "-p", help="Plot sanity checks for extracted matrices."),
 ):
     """
     Run decoden to denoise and pool your data
     """
 
-    _decoden_pipeline(["nmf", "hsr_consolidate"], 
-                      files_reference=files_reference, 
-                      control_label=control_label, 
-                      out_dir=out_dir, 
+    _decoden_pipeline(["nmf", "hsr_consolidate"],
+                      files_reference=files_reference,
+                      control_label=control_label,
+                      out_dir=out_dir,
                       blacklist_file=blacklist_file,
                       alpha_W=alpha_W,
                       alpha_H=alpha_H,
@@ -95,42 +115,45 @@ def denoise_consolidate(
                       n_train_bins=n_train_bins,
                       chunk_size=chunk_size,
                       seed=seed,
-                      plotting=plotting                      
+                      plotting=plotting
                       )
-    
-    typer.echo("\nDecoDen complete!")
-    
-    
 
-    
+    typer.echo("\nDecoDen complete!")
+
 
 @denoise_app.command("replicates")
 def denoise_replicates(
     files_reference: Optional[Path] = typer.Option(None, "--files_reference", "-f", help="""Path to JSON file with experiment conditions. 
-                        If you used DecoDen for pre-processing, use the `experiment_conditions.json` file"""), 
-    control_label: str  = typer.Option("control", "--control_label", "-con", help="The label for the control/input samples."), 
-    out_dir: Optional[Path] = typer.Option(None, "--out_dir", "-o", help="Path to directory where all output files will be written"), 
-    blacklist_file: Optional[Path] = typer.Option(None, "--blacklist_file", "-bl", help="Path to blacklist file. Make sure to use the blacklist that is appropriate for the genome assembly/organism."), 
-    alpha_W: float  = typer.Option(0.01, "--alpha_W", "-aW", help="Regularisation for the signal matrix."), 
-    alpha_H: float  = typer.Option(0.001, "--alpha_H", "-aH", help="Regularisation for the mixing matrix."), 
-    control_cov_threshold: float  = typer.Option(0.1, "--control_cov_threshold", "-cov", help="""Threshold for coverage in control samples. Only genomic bins above this threshold will be used. 
-                                It is recommended to choose a value larger than 1/bin_size."""), 
-    n_train_bins: int  = typer.Option(50000, "--n_train_bins", "-nt", help="Number of genomic bins to be used for training."), 
-    chunk_size: int  = typer.Option(50000, "--chunk_size", "-ch", help="Chunk size for processing the signal matrix. Should be smaller than `n_train_bins`."), 
-    seed: int  = typer.Option(0, "--seed", "-s", help="Random state."), 
-    plotting: bool  = typer.Option(False, "--plotting", "-p", help="Plot sanity checks for extracted matrices."), 
+                        If you used DecoDen for pre-processing, use the `experiment_conditions.json` file"""),
+    control_label: str = typer.Option(
+        "control", "--control_label", "-con", help="The label for the control/input samples."),
+    out_dir: Optional[Path] = typer.Option(
+        None, "--out_dir", "-o", help="Path to directory where all output files will be written"),
+    blacklist_file: Optional[Path] = typer.Option(
+        None, "--blacklist_file", "-bl", help="Path to blacklist file. Make sure to use the blacklist that is appropriate for the genome assembly/organism."),
+    alpha_W: float = typer.Option(
+        0.01, "--alpha_W", "-aW", help="Regularisation for the signal matrix."),
+    alpha_H: float = typer.Option(
+        0.001, "--alpha_H", "-aH", help="Regularisation for the mixing matrix."),
+    control_cov_threshold: float = typer.Option(0.1, "--control_cov_threshold", "-cov", help="""Threshold for coverage in control samples. Only genomic bins above this threshold will be used. 
+                                It is recommended to choose a value larger than 1/bin_size."""),
+    n_train_bins: int = typer.Option(
+        50000, "--n_train_bins", "-nt", help="Number of genomic bins to be used for training."),
+    chunk_size: int = typer.Option(
+        50000, "--chunk_size", "-ch", help="Chunk size for processing the signal matrix. Should be smaller than `n_train_bins`."),
+    seed: int = typer.Option(0, "--seed", "-s", help="Random state."),
+    plotting: bool = typer.Option(
+        False, "--plotting", "-p", help="Plot sanity checks for extracted matrices."),
 ):
     """
     Run decoden to denoise your replicates individually
     """
     typer.echo("Running DecoDen on individual replicates")
 
-    
-    
-    _decoden_pipeline(["nmf", "hsr_replicates"], 
-                      files_reference=files_reference, 
-                      control_label=control_label, 
-                      out_dir=out_dir, 
+    _decoden_pipeline(["nmf", "hsr_replicates"],
+                      files_reference=files_reference,
+                      control_label=control_label,
+                      out_dir=out_dir,
                       blacklist_file=blacklist_file,
                       alpha_W=alpha_W,
                       alpha_H=alpha_H,
@@ -138,47 +161,56 @@ def denoise_replicates(
                       n_train_bins=n_train_bins,
                       chunk_size=chunk_size,
                       seed=seed,
-                      plotting=plotting                      
+                      plotting=plotting
                       )
-    
+
     typer.echo("\nDecoDen (replicate specific) complete!")
 
-    
+
 @run_app.command("consolidate")
 def run_consolidate(
     input_csv: Optional[Path] = typer.Option(None, "--input_csv", "-i", help="""Path to CSV file with information about 
                                             experimental conditions. Must contain `filepath`, `exp_name` and `is_control` columns. 
-                                            Control/input should be the first condition. Input files can be in BED/BAM format."""), 
+                                            Control/input should be the first condition. Input files can be in BED/BAM format."""),
     bin_size: int = typer.Option(200, "--bin_size", "-bs", help="""Aize of genomic bin for tiling. 
                                 Recommended value is 10-200. Smaller bin size increases space and runtime, larger binsizes may occlude small variations. 
-                                """), 
-    num_jobs: int = typer.Option(1, "--num_jobs", "-n", help="Number of parallel jobs for preprocessing."), 
-    out_dir: Optional[Path] = typer.Option(None, "--out_dir", "-o", help="Path to directory where all output files will be written"), 
-    
-    
-    control_label: str  = typer.Option("control", "--control_label", "-con", help="The label for the control/input samples."), 
-    
-    blacklist_file: Optional[Path] = typer.Option(None, "--blacklist_file", "-bl", help="Path to blacklist file. Make sure to use the blacklist that is appropriate for the genome assembly/organism."), 
-    alpha_W: float  = typer.Option(0.01, "--alpha_W", "-aW", help="Regularisation for the signal matrix."), 
-    alpha_H: float  = typer.Option(0.001, "--alpha_H", "-aH", help="Regularisation for the mixing matrix."), 
-    control_cov_threshold: float  = typer.Option(0.1, "--control_cov_threshold", "-cov", help="""Threshold for coverage in control samples. Only genomic bins above this threshold will be used. 
-                                It is recommended to choose a value larger than 1/bin_size."""), 
-    n_train_bins: int  = typer.Option(50000, "--n_train_bins", "-nt", help="Number of genomic bins to be used for training."), 
-    chunk_size: int  = typer.Option(50000, "--chunk_size", "-ch", help="Chunk size for processing the signal matrix. Should be smaller than `n_train_bins`."), 
-    seed: int  = typer.Option(0, "--seed", "-s", help="Random state."), 
-    plotting: bool  = typer.Option(False, "--plotting", "-p", help="Plot sanity checks for extracted matrices."), 
+                                """),
+    num_jobs: int = typer.Option(
+        1, "--num_jobs", "-n", help="Number of parallel jobs for preprocessing."),
+    out_dir: Optional[Path] = typer.Option(
+        None, "--out_dir", "-o", help="Path to directory where all output files will be written"),
+
+
+    control_label: str = typer.Option(
+        "control", "--control_label", "-con", help="The label for the control/input samples."),
+
+    blacklist_file: Optional[Path] = typer.Option(
+        None, "--blacklist_file", "-bl", help="Path to blacklist file. Make sure to use the blacklist that is appropriate for the genome assembly/organism."),
+    alpha_W: float = typer.Option(
+        0.01, "--alpha_W", "-aW", help="Regularisation for the signal matrix."),
+    alpha_H: float = typer.Option(
+        0.001, "--alpha_H", "-aH", help="Regularisation for the mixing matrix."),
+    control_cov_threshold: float = typer.Option(0.1, "--control_cov_threshold", "-cov", help="""Threshold for coverage in control samples. Only genomic bins above this threshold will be used. 
+                                It is recommended to choose a value larger than 1/bin_size."""),
+    n_train_bins: int = typer.Option(
+        50000, "--n_train_bins", "-nt", help="Number of genomic bins to be used for training."),
+    chunk_size: int = typer.Option(
+        50000, "--chunk_size", "-ch", help="Chunk size for processing the signal matrix. Should be smaller than `n_train_bins`."),
+    seed: int = typer.Option(0, "--seed", "-s", help="Random state."),
+    plotting: bool = typer.Option(
+        False, "--plotting", "-p", help="Plot sanity checks for extracted matrices."),
 
 ):
     """
     Preprocess and denoise data with pooling
     """
     typer.echo("Running DecoDen")
-    _decoden_pipeline(["preprocess", "nmf", "hsr_consolidate"], 
-                      input_csv=input_csv, 
-                      bin_size=bin_size, 
-                      num_jobs=num_jobs, 
+    _decoden_pipeline(["preprocess", "nmf", "hsr_consolidate"],
+                      input_csv=input_csv,
+                      bin_size=bin_size,
+                      num_jobs=num_jobs,
                       out_dir=out_dir,
-                      control_label=control_label, 
+                      control_label=control_label,
                       blacklist_file=blacklist_file,
                       alpha_W=alpha_W,
                       alpha_H=alpha_H,
@@ -186,48 +218,56 @@ def run_consolidate(
                       n_train_bins=n_train_bins,
                       chunk_size=chunk_size,
                       seed=seed,
-                      plotting=plotting                      
+                      plotting=plotting
                       )
-    
-    typer.echo("\nDecoDen complete!")
-    
 
+    typer.echo("\nDecoDen complete!")
 
 
 @run_app.command("replicates")
 def run_replicates(input_csv: Optional[Path] = typer.Option(None, "--input_csv", "-i", help="""Path to CSV file with information about 
                                             experimental conditions. Must contain `filepath`, `exp_name` and `is_control` columns. 
-                                            Control/input should be the first condition. Input files can be in BED/BAM format."""), 
-    bin_size: int = typer.Option(200, "--bin_size", "-bs", help="""Aize of genomic bin for tiling. 
+                                            Control/input should be the first condition. Input files can be in BED/BAM format."""),
+                   bin_size: int = typer.Option(200, "--bin_size", "-bs", help="""Aize of genomic bin for tiling. 
                                 Recommended value is 10-200. Smaller bin size increases space and runtime, larger binsizes may occlude small variations. 
-                                """), 
-    num_jobs: int = typer.Option(1, "--num_jobs", "-n", help="Number of parallel jobs for preprocessing."), 
-    out_dir: Optional[Path] = typer.Option(None, "--out_dir", "-o", help="Path to directory where all output files will be written"), 
-    
-    
-    control_label: str  = typer.Option("control", "--control_label", "-con", help="The label for the control/input samples."), 
-    
-    blacklist_file: Optional[Path] = typer.Option(None, "--blacklist_file", "-bl", help="Path to blacklist file. Make sure to use the blacklist that is appropriate for the genome assembly/organism."), 
-    alpha_W: float  = typer.Option(0.01, "--alpha_W", "-aW", help="Regularisation for the signal matrix."), 
-    alpha_H: float  = typer.Option(0.001, "--alpha_H", "-aH", help="Regularisation for the mixing matrix."), 
-    control_cov_threshold: float  = typer.Option(0.1, "--control_cov_threshold", "-cov", help="""Threshold for coverage in control samples. Only genomic bins above this threshold will be used. 
-                                It is recommended to choose a value larger than 1/bin_size."""), 
-    n_train_bins: int  = typer.Option(50000, "--n_train_bins", "-nt", help="Number of genomic bins to be used for training."), 
-    chunk_size: int  = typer.Option(50000, "--chunk_size", "-ch", help="Chunk size for processing the signal matrix. Should be smaller than `n_train_bins`."), 
-    seed: int  = typer.Option(0, "--seed", "-s", help="Random state."), 
-    plotting: bool  = typer.Option(False, "--plotting", "-p", help="Plot sanity checks for extracted matrices."), 
+                                """),
+                   num_jobs: int = typer.Option(
+                       1, "--num_jobs", "-n", help="Number of parallel jobs for preprocessing."),
+                   out_dir: Optional[Path] = typer.Option(
+                       None, "--out_dir", "-o", help="Path to directory where all output files will be written"),
 
-):
+
+                   control_label: str = typer.Option(
+                       "control", "--control_label", "-con", help="The label for the control/input samples."),
+
+                   blacklist_file: Optional[Path] = typer.Option(
+                       None, "--blacklist_file", "-bl", help="Path to blacklist file. Make sure to use the blacklist that is appropriate for the genome assembly/organism."),
+                   alpha_W: float = typer.Option(
+                       0.01, "--alpha_W", "-aW", help="Regularisation for the signal matrix."),
+                   alpha_H: float = typer.Option(
+                       0.001, "--alpha_H", "-aH", help="Regularisation for the mixing matrix."),
+                   control_cov_threshold: float = typer.Option(0.1, "--control_cov_threshold", "-cov", help="""Threshold for coverage in control samples. Only genomic bins above this threshold will be used. 
+                                It is recommended to choose a value larger than 1/bin_size."""),
+                   n_train_bins: int = typer.Option(
+                       50000, "--n_train_bins", "-nt", help="Number of genomic bins to be used for training."),
+                   chunk_size: int = typer.Option(
+                       50000, "--chunk_size", "-ch", help="Chunk size for processing the signal matrix. Should be smaller than `n_train_bins`."),
+                   seed: int = typer.Option(
+                       0, "--seed", "-s", help="Random state."),
+                   plotting: bool = typer.Option(
+                       False, "--plotting", "-p", help="Plot sanity checks for extracted matrices."),
+
+                   ):
     """
     Preprocess and denoise individual replicates
     """
     typer.echo("Running DecoDen (replicates-specific)")
-    _decoden_pipeline(["preprocess", "nmf", "hsr_replicates"], 
-                      input_csv=input_csv, 
-                      bin_size=bin_size, 
-                      num_jobs=num_jobs, 
+    _decoden_pipeline(["preprocess", "nmf", "hsr_replicates"],
+                      input_csv=input_csv,
+                      bin_size=bin_size,
+                      num_jobs=num_jobs,
                       out_dir=out_dir,
-                      control_label=control_label, 
+                      control_label=control_label,
                       blacklist_file=blacklist_file,
                       alpha_W=alpha_W,
                       alpha_H=alpha_H,
@@ -235,10 +275,10 @@ def run_replicates(input_csv: Optional[Path] = typer.Option(None, "--input_csv",
                       n_train_bins=n_train_bins,
                       chunk_size=chunk_size,
                       seed=seed,
-                      plotting=plotting                      
+                      plotting=plotting
                       )
     typer.echo("\nDecoDen (replicate specific) complete!")
-    
+
 
 @app.command()
 def detect():
@@ -246,4 +286,3 @@ def detect():
     Detect peaks
     """
     typer.echo("Detecting peaks")
-
