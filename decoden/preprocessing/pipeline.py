@@ -57,6 +57,7 @@ def make_args(input_csv, out_dir, bin_size):
 
     logger.info(f'Making arguments for parallelization...')
     arg_list = []
+    
     for _, row in input_data.iterrows():
         filepath = row.filepath 
         if not isabs(filepath):
@@ -78,7 +79,7 @@ def make_args(input_csv, out_dir, bin_size):
                 "replicate": row.replicate
             }
         )
-        
+
     logger.debug(arg_list)
     return arg_list
 
@@ -124,7 +125,7 @@ def run_single(args):
     else:
         logger.info(f'Skipping {input_filepath} as output already exists.')
 
-    return (tiled_filepath, [exp_name, replicate])
+    return (tiled_filepath, [exp_name, replicate, sample_name])
 
 
 def run_preprocessing(input_csv, bin_size, num_jobs, out_dir):
@@ -140,9 +141,10 @@ def run_preprocessing(input_csv, bin_size, num_jobs, out_dir):
         list: list of tuples (tiled_filepath, name). `tiled_filepath` is the path to the processed file.
     """  
     
+    Path(out_dir, 'data').mkdir(parents=True, exist_ok=True)
+    
     arg_list = make_args(input_csv, out_dir, bin_size)
 
-    Path(out_dir, 'data').mkdir(parents=True, exist_ok=True)
     
     logger.info(f'Running {num_jobs} in parallel...')
     tiled_files = Parallel(n_jobs=num_jobs)(

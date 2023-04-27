@@ -68,16 +68,19 @@ def _decoden_pipeline(pipeline_steps,
         assert "nmf" in pipeline_steps, "HSR requires NMF as a starting step"
         
         hsr_df = run_HSR(wmatrix, mask, conditions)
-        save_hsr_output(hsr_df, out_dir, label="_consolidate")
+        save_hsr_output(hsr_df, out_dir, replicate_specific=False)
     
     if "hsr_replicates" in pipeline_steps:
         assert "nmf" in pipeline_steps, "HSR requires NMF as a starting step"
         
         hsr_df = run_HSR_replicates(data_noBL, wmatrix, mmatrix, mask, conditions, conditions_counts)
-        save_hsr_output(hsr_df, out_dir, label="_replicates")
+        save_hsr_output(hsr_df, out_dir, replicate_specific=True, files_ref=files_reference)
         
         
     if "detect" in pipeline_steps:
+        
+        # run_peak_calling()
+        
         pass
     
     

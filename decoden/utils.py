@@ -57,7 +57,7 @@ def load_files(files_ref, data_folder, sample_conditions):
     conditions_counts = {c: 0 for c in sample_conditions}
 
     data = None
-    for fname, (c, rep) in tqdm(files_ref.items()):
+    for fname, (c, rep, label) in tqdm(files_ref.items()):
         conditions_counts[c] += 1    
         colname = c+"_"+str(rep)
         df = pd.read_csv(os.path.join(data_folder, fname), sep="\t", names=["seqnames", "start", "end", colname])
@@ -93,8 +93,17 @@ def extract_conditions(json_file, control_label="control"):
     return conditions 
 
 
-def save_hsr_output(hsr_df, out_dir, label=""):
+def save_hsr_output(hsr_df, out_dir, replicate_specific=False, files_ref=None):
     print("\nSaving HSR output")
+    label="_replicates" if replicate_specific else "_consolidated"
+    if replicate_specific:
+        with open(files_ref, "r") as f:
+            files_mapping = json.load(f)
+            
+        label_mapping = {}
+        for v in files_mapping.values():
+            label_mapping[(v[0], v[1])] = v[2]
+    
     hsr_df.reset_index().to_feather(join(out_dir, f"HSR_results{label}.ftr"))
     
     # TODO: compress bedgraph
@@ -106,15 +115,22 @@ def save_hsr_output(hsr_df, out_dir, label=""):
     r = lambda: random.randint(0, 255) 
     # filenames = {}
     for c in tqdm(cols):
-        track = c.split(" HSR")[0]
+        condition = c.split(" HSR")[0]
+        if replicate_specific:
+            condition, replicate = condition.rsplit("_", 1)
+            replicate = int(replicate)
         
-        random.seed(track)
+        random.seed(condition)
         color1 = '{},{},{}'.format(r(),r(),r())
         color2 = '{},{},{}'.format(r(),r(),r())
         
-        fname = join(bedgraph_dir, f"{track}_HSR.bdg")
+        if replicate_specific:
+            label = label_mapping[(condition, replicate)]
+            fname = join(bedgraph_dir, f"{label}_DecoDen.bdg")
+        else:
+            fname = join(bedgraph_dir, f"{condition}_DecoDen.bdg")
         with open(fname, 'w') as f:
-            f.write(f'track type=bedGraph name="{track}" description="{track}" visibility=full color={color1} altColor={color2} priority=20\n')
+            f.write(f'track type=bedGraph name="{condition}" description="{condition}" visibility=full color={color1} altColor={color2} priority=20\n')
         hsr_df[[c]].fillna(0.0).to_csv(fname, header=False, sep="\t", mode='a')
     
     
