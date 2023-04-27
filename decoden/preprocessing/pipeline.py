@@ -18,26 +18,27 @@ def read_csv(input_csv_filepath):
     Args:
         input_csv_filepath (string): path to CSV file
 
-    Raises:
-        ValueError: `filepath` column not found
-        ValueError: `exp_name` column not found
-        ValueError: `is_control` column not found
-
     Returns:
         pandas.DataFrame: DataFrame of samples
     """
     logger.info(f'Reading CSV file {input_csv_filepath}')
-    input_csv = pd.read_csv(input_csv_filepath)
     
-    if 'filepath' not in input_csv.columns:
-        logger.error('`filepath` column not found. Check input CSV.')
-        raise ValueError("`filepath` column not found. Check input CSV.")
-    if 'exp_name' not in input_csv.columns:
-        logger.error('`exp_name` column not found. Check input CSV.')
-        raise ValueError("`exp_name` column not found. Check input CSV.")
-    if 'is_control' not in input_csv.columns:
-        logger.error('`is_control` column not found. Check input CSV.')
-        raise ValueError("`is_control` column not found. Check input CSV.")
+    
+    assert os.path.exists(input_csv_filepath), f"Annotation file {input_csv_filepath} not found"
+    
+    input_csv = pd.read_csv(input_csv_filepath)
+
+    assert len(input_csv)>0, "Annotation .csv empty"
+    
+    n_cols = len(input_csv.columns)
+    # assert n_cols in [5, 6], "Invalid number of columns"
+    for col in ["filepath", "exp_name", "is_control", "replicate", "cell_type"]:
+        assert col in input_csv.columns, f"Annotation .csv requires `{col}` column"
+    if n_cols==6:
+        assert "sample_label" in input_csv.columns, "Optional labelling column must be `sample_label`"
+        
+    assert len(input_csv[input_csv["is_control"]==1]["exp_name"].unique())>0, "Specify at least one control condition"
+    assert len(input_csv[input_csv["is_control"]==1]["exp_name"].unique())<2, "Multiple control labels not allowed"
     
     return input_csv
 
@@ -62,10 +63,15 @@ def make_args(input_csv, out_dir, bin_size):
         if not isabs(filepath):
             filepath = join(input_dirname, filepath)
         
+        if "sample_label" in input_data.columns:
+            sample_name = row.sample_label + "_rep" + str(row.replicate)
+        else:
+            sample_name = row.exp_name + "_"+ row.cell_type + "_rep" + str(row.replicate)
+        sample_name = sample_name.replace(" ", "_")
         arg_list.append(
             {
                 "filepath": filepath,
-                "sample_name": row.exp_name,
+                "sample_name": sample_name,
                 "out_dir": out_dir,
                 "is_control": row.is_control,
                 "bin_size": bin_size
@@ -76,25 +82,6 @@ def make_args(input_csv, out_dir, bin_size):
     return arg_list
 
 
-
-
-def check_csv_file(input_csv):
-    assert os.path.exists(input_csv), f"Annotation file {input_csv} not found"
-    
-    input_data = read_csv(input_csv)
-    assert len(input_data)>0, "Annotation .csv empty"
-    
-    n_cols = len(input_data.columns)
-    # assert n_cols in [5, 6], "Invalid number of columns"
-    for col in ["filepath", "exp_name", "is_control", "replicate", "cell_type"]:
-        assert col in input_data.columns, f"Annotation .csv requires `{col}` column"
-    if n_cols==6:
-        assert "sample_label" in input_data.columns, "Optional labelling column must be `sample_label`"
-        
-    assert len(input_data[input_data["is_control"]==1]["exp_name"].unique())>0, "Specify at least one control condition"
-    assert len(input_data[input_data["is_control"]==1]["exp_name"].unique())<2, "Multiple control labels not allowed"
-    
-   
 
 def write_json(tiled_files, out_dir):
     """write `experiment_conditions.json` to output directory. This file is required to run DecoDen later.
@@ -126,7 +113,8 @@ def run_single(args):
     bin_size = args["bin_size"]
     
     files = os.listdir(os.path.join(out_dir, 'data'))
-    tiled_filepath = os.path.splitext(os.path.basename(input_filepath))[0] + "_filterdup_pileup_tiled.bed"
+    # tiled_filepath = os.path.splitext(os.path.basename(input_filepath))[0] + "_filterdup_pileup_tiled.bed"
+    tiled_filepath = sample_name + "_filterdup_pileup_tiled.bed"
     
     if tiled_filepath not in files: 
         assert os.path.exists(input_filepath), f"File {input_filepath} not found"
@@ -148,8 +136,7 @@ def run_preprocessing(input_csv, bin_size, num_jobs, out_dir):
 
     Returns:
         list: list of tuples (tiled_filepath, name). `tiled_filepath` is the path to the processed file.
-    """
-    check_csv_file(input_csv)    
+    """  
     
     arg_list = make_args(input_csv, out_dir, bin_size)
 
