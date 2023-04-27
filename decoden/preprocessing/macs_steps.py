@@ -138,10 +138,3 @@ if __name__ == '__main__':
 
     tiled_filepath = run_pipeline(args.input_filepath, args.name, args.out_dir, args.is_control, args.bin_size)
     
-#     input_filepath = "/home/gvisona/Projects/Testing_Decoden/data/wce/ENCFF234NNJ_chr21.bam"
-#     name = "test"
-#     out_dir = "/home/gvisona/Projects/Testing_Decoden/outputs"
-#     is_control = 1
-#     bin_size = 200
-#     tiled_filepath = run_pipeline(input_filepath, name, out_dir, is_control, bin_size)
-# #     tile('temp/e1_filterdup_pileup.bdg', 200)
