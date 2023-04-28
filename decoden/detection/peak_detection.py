@@ -81,15 +81,10 @@ def run_peak_calling(files_reference, out_dir, control_label):
         label_mapping[condition].append(f"{label}_DecoDen.bdg")
         
     for cond, files in label_mapping.items():
+        assert len(files)>1, "Hypothesis testing requires multiple replicates"
         cond_df = load_hsr_results(files, out_dir=out_dir)
         pc_results = detect_condition_peaks_ttest(cond_df, cond).reset_index()
         cond_peaks = compress_bed_peak_intervals(pc_results, cond, min_pval=1e-10)
         cond_peaks.to_csv(join(peaks_output_dir, f"{cond}_peaks.bed"), sep="\t", header=False, index=False)
     
         
-    # Load the bdg
-    
-    
-    # Run the hypothesis testing
-        
-    

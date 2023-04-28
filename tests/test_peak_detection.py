@@ -18,7 +18,6 @@ def prepare_denoised_data(tmp_session_directory, correct_csv, bl_file):
     seed = 0
     plotting = False
     
-    # if not exists(join(out_dir, "HSR_results_replicates.ftr")):
     run_replicates(correct_csv, 
                     bin_size, 
                     num_jobs, 
