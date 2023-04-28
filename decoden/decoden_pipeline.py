@@ -16,6 +16,7 @@ from decoden.utils import extract_conditions, save_hsr_output
 from decoden.preprocessing.pipeline import run_preprocessing
 from decoden.denoising.nmf import run_NMF
 from decoden.denoising.hsr import run_HSR, run_HSR_replicates
+from decoden.detection.peak_detection import run_peak_calling
 
 def _decoden_pipeline(pipeline_steps,
                       
@@ -79,8 +80,7 @@ def _decoden_pipeline(pipeline_steps,
         
     if "detect" in pipeline_steps:
         
-        # run_peak_calling()
+        run_peak_calling(files_reference, out_dir, control_label)
         
-        pass
     
     

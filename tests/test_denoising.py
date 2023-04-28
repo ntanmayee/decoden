@@ -2,6 +2,8 @@ import pytest
 from os.path import join, exists
 from decoden.main import *
 from decoden.decoden_pipeline import _decoden_pipeline
+from decoden.constants import *
+
 
 @pytest.fixture(autouse=True)
 def prepare_preprocessed_data(tmp_session_directory, correct_csv):
@@ -78,9 +80,9 @@ def test_hsr_consolidated_results_saved(tmp_session_directory, bl_file):
         plotting=plotting
     )
 
-    bdg_folder = join(out_dir, "output_bedgraph_files")
+    bdg_folder = join(out_dir, BEDGRAPH_FOLDER)
     assert exists(bdg_folder)
-    assert exists(join(out_dir, "HSR_results_consolidate.ftr"))
+    assert exists(join(out_dir, "HSR_results_consolidated.ftr"))
 
     
 def test_nmf_hsr_replicates_results_saved(tmp_session_directory, bl_file):    
@@ -111,6 +113,6 @@ def test_nmf_hsr_replicates_results_saved(tmp_session_directory, bl_file):
     )
         
 
-    bdg_folder = join(out_dir, "output_bedgraph_files")
+    bdg_folder = join(out_dir, BEDGRAPH_FOLDER)
     assert exists(bdg_folder)
     assert exists(join(out_dir, "HSR_results_replicates.ftr"))

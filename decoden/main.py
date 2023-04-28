@@ -275,8 +275,22 @@ def run_replicates(input_csv: Optional[Path] = typer.Option(None, "--input_csv",
 
 
 @app.command()
-def detect():
+def detect(files_reference: Optional[Path] = typer.Option(None, "--files_reference", "-f", help="""Path to JSON file with experiment conditions. 
+                        If you used DecoDen for pre-processing, use the `experiment_conditions.json` file"""),
+           out_dir: Optional[Path] = typer.Option(
+                       None, "--out_dir", "-o", help="Path to directory where all output files will be written"),
+           control_label: str = typer.Option(
+                       "control", "--control_label", "-con", help="The label for the control/input samples.")
+    ):
     """
     Detect peaks
     """
     typer.echo("Detecting peaks")
+    
+    _decoden_pipeline(["detect"],
+                      files_reference=files_reference,
+                      out_dir=out_dir,
+                      control_label=control_label
+                      )
+    
+    typer.echo("\nPeak calling complete!")

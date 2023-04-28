@@ -2,6 +2,7 @@ import pytest
 from os.path import join, exists
 from decoden.main import *
 from decoden.decoden_pipeline import _decoden_pipeline
+from decoden.constants import *
 
 
 def test_run_replicates_results_saved(tmp_session_directory, bl_file, correct_csv):    
@@ -39,7 +40,7 @@ def test_run_replicates_results_saved(tmp_session_directory, bl_file, correct_cs
     assert exists(join(nmf_folder, "mixing_matrix.csv"))
     assert exists(join(nmf_folder, "signal_matrix.ftr"))
     
-    bdg_folder = join(out_dir, "output_bedgraph_files")
+    bdg_folder = join(out_dir, BEDGRAPH_FOLDER)
     assert exists(bdg_folder)
     assert exists(join(out_dir, "HSR_results_replicates.ftr"))
 
@@ -79,6 +80,6 @@ def test_run_consolidated_results_saved(tmp_session_directory, bl_file, correct_
     assert exists(join(nmf_folder, "mixing_matrix.csv"))
     assert exists(join(nmf_folder, "signal_matrix.ftr"))
     
-    bdg_folder = join(out_dir, "output_bedgraph_files")
+    bdg_folder = join(out_dir, BEDGRAPH_FOLDER)
     assert exists(bdg_folder)
-    assert exists(join(out_dir, "HSR_results_consolidate.ftr"))
+    assert exists(join(out_dir, "HSR_results_consolidated.ftr"))

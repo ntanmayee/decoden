@@ -8,6 +8,7 @@ import os
 from os.path import join
 from decoden.preprocessing.logger import logger
 import random
+from decoden.constants import *
 
 
 def print_message():
@@ -108,7 +109,7 @@ def save_hsr_output(hsr_df, out_dir, replicate_specific=False, files_ref=None):
     
     # TODO: compress bedgraph
     
-    bedgraph_dir = join(out_dir, "output_bedgraph_files")
+    bedgraph_dir = join(out_dir, BEDGRAPH_FOLDER)
     os.makedirs(bedgraph_dir, exist_ok=True)
     cols = [c for c in hsr_df.columns if c.endswith("HSR Value")]
     
