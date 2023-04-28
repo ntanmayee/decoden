@@ -1,6 +1,7 @@
 import typer
 import os
 import json
+import pandas as pd
 from os.path import join
 from pathlib import Path
 from typing import Optional, List
@@ -39,6 +40,26 @@ def callback(version: bool = typer.Option(
     Multi-condition ChIP-Seq Analysis with DecoDen
     """
     print_message()
+
+@app.command("create_csv")
+def create_csv(
+    out_dir: Optional[Path] = typer.Option(
+        None, "--out_dir", "-o", help="Path to directory where all output files will be written"),
+    sample_label: bool = typer.Option(
+        False, "--sample_label", "-sl", help="Flag to add the optional column `sample_label`.")
+):
+    
+    cols = ["filepath", "exp_name", "is_control", "replicate", "cell_type"]
+    if sample_label:
+        cols.append("sample_label")
+    default_vals = ["path/to/sample", "control", 1, 1, "myTissue", "mySampleLabel"]
+    df = pd.DataFrame([default_vals[:len(cols)]]*2, columns=cols)
+    
+    fname = "samples.csv"
+    if out_dir is not None:
+        fname = os.path.join(out_dir, fname)
+    df.to_csv(fname, index=False)
+    
 
 
 @app.command("preprocess")

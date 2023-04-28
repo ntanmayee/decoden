@@ -151,8 +151,6 @@ The annotations .csv must contain the following columns:
 | `sample_label` (OPTIONAL) | if provided, it is used to name the output files corresponding to the sample.
 
 
-**TODO: additional columns?**
-
 An example of a suitable annotation .csv is as follows:
 
 |filepath                      |exp_name|is_control|replicate|cell_type       |sample_label      |
@@ -164,6 +162,13 @@ An example of a suitable annotation .csv is as follows:
 |h3k27me3/ENCFF623DRR_chr21.bam|h3k27me3|0         |1        |transverse colon|MySample3_H3K27me3|
 |h3k27me3/ENCFF228ABC_chr21.bam|h3k27me3|0         |2        |transverse colon|MySample3_H3K27me3|
 
+
+A skeleton file for the sample annotation, which can then be edited, can be generated using the command `decoden create_csv`:
+
+```sh
+# Create an annotation csv with the correct structure
+decoden create_csv --sample_label
+```
 
 
 ### DecoDen outputs
