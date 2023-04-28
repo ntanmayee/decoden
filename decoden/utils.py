@@ -9,8 +9,13 @@ from os.path import join
 from decoden.preprocessing.logger import logger
 import random
 from itertools import groupby
+from collections import defaultdict
 from decoden.constants import *
 
+dtype_mapping = defaultdict(lambda: float)
+dtype_mapping["seqnames"] = str
+dtype_mapping["start"] = int
+dtype_mapping["end"] = int
 
 def print_message():
     """Print cool opening message when DecoDen in run :) 
@@ -57,12 +62,15 @@ def load_files(files_ref, data_folder, sample_conditions):
     """
 
     conditions_counts = {c: 0 for c in sample_conditions}
-
+    
     data = None
+    
+    
     for fname, (c, rep, label) in tqdm(files_ref.items()):
         conditions_counts[c] += 1    
         colname = c+"_"+str(rep)
-        df = pd.read_csv(os.path.join(data_folder, fname), sep="\t", names=["seqnames", "start", "end", colname])
+        df = pd.read_csv(os.path.join(data_folder, fname), sep="\t", 
+                         names=["seqnames", "start", "end", colname], dtype=dtype_mapping)
         df.set_index(["seqnames", "start", "end"], inplace=True)
         if data is None:
             data = df
