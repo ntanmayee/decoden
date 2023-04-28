@@ -256,7 +256,7 @@ def run_replicates(input_csv: Optional[Path] = typer.Option(None, "--input_csv",
     Preprocess and denoise individual replicates
     """
     typer.echo("Running DecoDen (replicates-specific)")
-    _decoden_pipeline(["preprocess", "nmf", "hsr_replicates"],
+    _decoden_pipeline(["preprocess", "nmf", "hsr_replicates", "detect"],
                       input_csv=input_csv,
                       bin_size=bin_size,
                       num_jobs=num_jobs,
