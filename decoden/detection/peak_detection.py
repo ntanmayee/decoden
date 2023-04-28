@@ -26,6 +26,8 @@ def detect_condition_peaks_ttest(condition_df, condition, threshold = 0.01):
     cols = [f"{condition} Peak", f"{condition} Statistic", f"{condition} Pvalue", ]
         
     test = stats.ttest_1samp(condition_df.values, 0.0, axis=1, alternative="greater")
+    
+    # TODO: improve selection criterion
     test_results = np.vstack([test.pvalue<threshold, test.statistic, test.pvalue]).T
     out_df = pd.DataFrame(test_results, columns=cols, index=condition_df.index)
         

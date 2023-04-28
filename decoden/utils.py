@@ -8,6 +8,7 @@ import os
 from os.path import join
 from decoden.preprocessing.logger import logger
 import random
+from itertools import groupby
 from decoden.constants import *
 
 
@@ -93,10 +94,25 @@ def extract_conditions(json_file, control_label="control"):
     logger.info(conditions)
     return conditions 
 
+def compress_bdg_df(df):
+    if not "seqnames" in df.columns:
+        df = df.reset_index()
+    vals = df.iloc[:,[0,3]].values.tolist()
+    count_dups = [[sum(1 for v in group), v] for v, group in groupby(vals)]
+    idx = 0
+    compressed_df = []
+    for interval, (chrom, val) in tqdm(count_dups):
+        row = {"seqnames": chrom, "start": df.iat[idx, 1], "end": df.iat[idx+interval-1, 2],
+               "Value": val}
+        compressed_df.append(row)
+        idx += interval
+
+    compressed_df = pd.DataFrame(compressed_df)
+    return compressed_df
 
 def save_hsr_output(hsr_df, out_dir, replicate_specific=False, files_ref=None):
     print("\nSaving HSR output")
-    label="_replicates" if replicate_specific else "_consolidated"
+    # label="_replicates" if replicate_specific else "_consolidated"
     if replicate_specific:
         with open(files_ref, "r") as f:
             files_mapping = json.load(f)
@@ -105,16 +121,14 @@ def save_hsr_output(hsr_df, out_dir, replicate_specific=False, files_ref=None):
         for v in files_mapping.values():
             label_mapping[(v[0], v[1])] = v[2]
     
-    hsr_df.reset_index().to_feather(join(out_dir, f"HSR_results{label}.ftr"))
+    # hsr_df.reset_index().to_feather(join(out_dir, f"HSR_results{label}.ftr"))
     
-    # TODO: compress bedgraph
     
     bedgraph_dir = join(out_dir, BEDGRAPH_FOLDER)
     os.makedirs(bedgraph_dir, exist_ok=True)
     cols = [c for c in hsr_df.columns if c.endswith("HSR Value")]
     
     r = lambda: random.randint(0, 255) 
-    # filenames = {}
     for c in tqdm(cols):
         condition = c.split(" HSR")[0]
         if replicate_specific:
@@ -132,7 +146,9 @@ def save_hsr_output(hsr_df, out_dir, replicate_specific=False, files_ref=None):
             fname = join(bedgraph_dir, f"{condition}_DecoDen.bdg")
         with open(fname, 'w') as f:
             f.write(f'track type=bedGraph name="{condition}" description="{condition}" visibility=full color={color1} altColor={color2} priority=20\n')
-        hsr_df[[c]].fillna(0.0).to_csv(fname, header=False, sep="\t", mode='a')
+        bdg_df = hsr_df[[c]].fillna(0.0)
+        bdg_df = compress_bdg_df(bdg_df)
+        bdg_df.to_csv(fname, header=False, sep="\t", mode='a')
     
     
     
