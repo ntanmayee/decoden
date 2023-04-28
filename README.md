@@ -115,13 +115,11 @@ decoden run replicates --help
 # Example of calls to run the full DecoDen pipeline
 decoden run consolidate -i "samples.csv" -o "output_directory" -bs 200 -n 2 \
     --control_label "control" \
-    --out_dir "output_directory" \
     --blacklist_file "hg19-blacklist.v2.bed" \
     --plotting
 
 decoden run replicates -i "samples.csv" -o "output_directory" -bs 200 -n 2 \
     --control_label "control" \
-    --out_dir "output_directory" \
     --blacklist_file "hg19-blacklist.v2.bed" \
     --plotting
 ```
@@ -132,11 +130,10 @@ decoden run replicates -i "samples.csv" -o "output_directory" -bs 200 -n 2 \
 
 ### Input data
 
-**TODO: Is .bed also acceptable for input?**
 
 Running decoden requires three inputs:
-- The *.bam* files for your ChIP-seq experiments
-- A file with the annotations for the .bam files in *.csv* format
+- The *.bam* or *.bed* files for your ChIP-seq experiments
+- A file with the annotations for the ChIP-seq experiments files in *.csv* format
 - (Optional) a *.bed* file with the blacklisted regions to exclude for the target genome alignment
 
 The annotations .csv must contain the following columns:
@@ -179,15 +176,23 @@ The *NMF* folder contains the intermediate results produced by the factorization
 
 The *output_bedgraph_files* directory contains the outputs of DecoDen for each histone modification (if run in `consolidate` mode) or for each replicate (if run in `replicates` mode) in .bdg files. These files can directly be uploaded to the [UCSC Genome Browser](https://genome.ucsc.edu/) for visualization.
 
+If the DecoDen pipeline was run in `replicates` mode, the output folder will also contain a directory `called_peaks` that contains the peaks detected from the adjusted replicates in *.bed* format, where the score represent -log10(pval).
 
-The full set of results is gathered in a single dataframe called `HSR_results_consolidated.ftr` or `HSR_results_replicates.ftr` depending on the mode. The columns named `... HSR Value` contain the denoised signals produced by DecoDen. 
+## Example: how to run DecoDen on your data
 
-To inspect results use the pandas package: 
+Here is a brief example of the workflow to run DecoDen on your data:
 
-```python
-import pandas as pd
-hsr_results = pd.read_feather('HSR_results_consolidated.ftr')
+```sh
+# Create the annotation csv
+decoden create_csv --sample_label
+
+# Edit the generated file `samples.csv` with the information for your ChIP-seq samples
+
+# Run the DecoDen pipeline
+decoden run replicates -i "samples.csv" -o "output_directory" -bs 200
 ```
+
+
 
 
 

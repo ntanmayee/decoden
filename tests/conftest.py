@@ -10,15 +10,15 @@ from os.path import join
 def change_test_dir(request, monkeypatch):
     monkeypatch.chdir(request.fspath.dirname)
     
-# @pytest.fixture(scope="session")
-# def tmp_session_directory(tmp_path_factory):
-#     tmp_folder = tmp_path_factory.mktemp("tmp_test_folder")
-#     return tmp_folder
-
-
 @pytest.fixture(scope="session")
-def tmp_session_directory():
-    return "decoden_output_devel"
+def tmp_session_directory(tmp_path_factory):
+    tmp_folder = tmp_path_factory.mktemp("tmp_test_folder")
+    return tmp_folder
+
+
+# @pytest.fixture(scope="session")
+# def tmp_session_directory():
+#     return "decoden_output_devel"
 
 
 @pytest.fixture(scope="session")

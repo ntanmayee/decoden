@@ -94,6 +94,11 @@ def extract_conditions(json_file, control_label="control"):
     logger.info(conditions)
     return conditions 
 
+def extract_control_condition(input_csv_filepath):
+    input_csv = pd.read_csv(input_csv_filepath)
+    control_label = input_csv[input_csv["is_control"]==1]["exp_name"].iloc[0]
+    return control_label
+
 def compress_bdg_df(df):
     if not "seqnames" in df.columns:
         df = df.reset_index()

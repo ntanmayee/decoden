@@ -9,7 +9,7 @@ def prepare_denoised_data(tmp_session_directory, correct_csv, bl_file):
     num_jobs = 1
     out_dir = join(tmp_session_directory, "detect")
     
-    control_label = "control"
+    # control_label = "control"
     alpha_W = 0.01
     alpha_H = 0.001
     control_cov_threshold = 0.5
@@ -22,7 +22,7 @@ def prepare_denoised_data(tmp_session_directory, correct_csv, bl_file):
     run_replicates(correct_csv, 
                     bin_size, 
                     num_jobs, 
-                    control_label=control_label,
+                    # control_label=control_label,
                     out_dir=out_dir, 
                     blacklist_file=bl_file, 
                     alpha_W=alpha_W, 

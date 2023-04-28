@@ -12,7 +12,7 @@ The possible steps are:
 from os.path import join
 from pathlib import Path
 
-from decoden.utils import extract_conditions, save_hsr_output
+from decoden.utils import extract_conditions, save_hsr_output, extract_control_condition
 from decoden.preprocessing.pipeline import run_preprocessing
 from decoden.denoising.nmf import run_NMF
 from decoden.denoising.hsr import run_HSR, run_HSR_replicates
@@ -47,6 +47,7 @@ def _decoden_pipeline(pipeline_steps,
     
         Path(out_dir).mkdir(parents=True, exist_ok=True)
 
+        control_label = extract_control_condition(input_csv)
         tiled_files = run_preprocessing(input_csv, bin_size, num_jobs, out_dir)
         files_reference = join(out_dir, 'experiment_conditions.json')
         

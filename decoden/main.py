@@ -196,8 +196,8 @@ def run_consolidate(
         None, "--out_dir", "-o", help="Path to directory where all output files will be written"),
 
 
-    control_label: str = typer.Option(
-        "control", "--control_label", "-con", help="The label for the control/input samples."),
+    # control_label: str = typer.Option(
+    #     "control", "--control_label", "-con", help="The label for the control/input samples."),
 
     blacklist_file: Optional[Path] = typer.Option(
         None, "--blacklist_file", "-bl", help="Path to blacklist file. Make sure to use the blacklist that is appropriate for the genome assembly/organism."),
@@ -225,7 +225,7 @@ def run_consolidate(
                       bin_size=bin_size,
                       num_jobs=num_jobs,
                       out_dir=out_dir,
-                      control_label=control_label,
+                    #   control_label=control_label,
                       blacklist_file=blacklist_file,
                       alpha_W=alpha_W,
                       alpha_H=alpha_H,
@@ -252,8 +252,8 @@ def run_replicates(input_csv: Optional[Path] = typer.Option(None, "--input_csv",
                        None, "--out_dir", "-o", help="Path to directory where all output files will be written"),
 
 
-                   control_label: str = typer.Option(
-                       "control", "--control_label", "-con", help="The label for the control/input samples."),
+                #    control_label: str = typer.Option(
+                #        "control", "--control_label", "-con", help="The label for the control/input samples."),
 
                    blacklist_file: Optional[Path] = typer.Option(
                        None, "--blacklist_file", "-bl", help="Path to blacklist file. Make sure to use the blacklist that is appropriate for the genome assembly/organism."),
@@ -282,7 +282,7 @@ def run_replicates(input_csv: Optional[Path] = typer.Option(None, "--input_csv",
                       bin_size=bin_size,
                       num_jobs=num_jobs,
                       out_dir=out_dir,
-                      control_label=control_label,
+                    #   control_label=control_label,
                       blacklist_file=blacklist_file,
                       alpha_W=alpha_W,
                       alpha_H=alpha_H,

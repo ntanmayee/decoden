@@ -21,7 +21,6 @@ def test_run_replicates_results_saved(tmp_session_directory, bl_file, correct_cs
     run_replicates(correct_csv,
                    bin_size,
                    num_jobs,
-                   control_label=control_label,
                    out_dir=out_dir,
                    blacklist_file=bl_file,
                    alpha_W=alpha_W,
@@ -32,6 +31,7 @@ def test_run_replicates_results_saved(tmp_session_directory, bl_file, correct_cs
                    seed=seed,
                    plotting=plotting
                    )
+    
     assert exists(out_dir)
     assert exists(join(out_dir, "experiment_conditions.json"))
     nmf_folder = join(out_dir, "NMF")
@@ -71,7 +71,6 @@ def test_run_consolidated_results_saved(tmp_session_directory, bl_file, correct_
     run_consolidate(correct_csv,
                     bin_size,
                     num_jobs,
-                    control_label=control_label,
                     out_dir=out_dir,
                     blacklist_file=bl_file,
                     alpha_W=alpha_W,
@@ -82,6 +81,7 @@ def test_run_consolidated_results_saved(tmp_session_directory, bl_file, correct_
                     seed=seed,
                     plotting=plotting
                     )
+    
     assert exists(out_dir)
     assert exists(join(out_dir, "experiment_conditions.json"))
     nmf_folder = join(out_dir, "NMF")
