@@ -22,8 +22,10 @@ denoise_app = typer.Typer()
 run_app = typer.Typer()
 
 
-app.add_typer(denoise_app, name="denoise")
-app.add_typer(run_app, name="run")
+app.add_typer(denoise_app, name="denoise", help="""Run the denoising step of DecoDen on suitably preprocessed data.
+              Use `decoden denoise --help` for more info""")
+app.add_typer(run_app, name="run", help="""Run the full decoden pipeline to preprocess end denoise BAM/BED files.
+              Use `decoden run --help` for more info""")
 
 
 
@@ -48,7 +50,10 @@ def create_csv(
     sample_label: bool = typer.Option(
         False, "--sample_label", "-sl", help="Flag to add the optional column `sample_label`.")
 ):
-    
+    """
+    Create a sample .csv file with the correct fields for annotating the data for DecoDen.
+    Edit the file with the correct paths before executing the pipeline.
+    """
     cols = ["filepath", "exp_name", "is_control", "replicate", "cell_type"]
     if sample_label:
         cols.append("sample_label")
@@ -76,7 +81,7 @@ def preprocess(
         None, "--out_dir", "-o", help="Path to directory where all output files will be written"),
 ):
     """
-    Preprocess data to be in the correct format for DecoDen
+    Preprocess BAM/BED data to be in the correct format for running DecoDen
     """
 
     typer.echo("Preprocessing data")
@@ -116,7 +121,7 @@ def denoise_consolidate(
         False, "--plotting", "-p", help="Plot sanity checks for extracted matrices."),
 ):
     """
-    Run decoden to denoise and pool your data
+    Run the denoising step of DecoDen in pooling mode.
     """
 
     _decoden_pipeline(["nmf", "hsr_consolidate"],
@@ -161,7 +166,7 @@ def denoise_replicates(
         False, "--plotting", "-p", help="Plot sanity checks for extracted matrices."),
 ):
     """
-    Run decoden to denoise your replicates individually
+    Run the denoising step of DecoDen to adjust the individual replicates.
     """
     typer.echo("Running DecoDen on individual replicates")
 
@@ -217,7 +222,7 @@ def run_consolidate(
 
 ):
     """
-    Preprocess and denoise data with pooling
+    Preprocess and denoise data in pooling mode.
     """
     typer.echo("Running DecoDen")
     _decoden_pipeline(["preprocess", "nmf", "hsr_consolidate"],
@@ -225,7 +230,6 @@ def run_consolidate(
                       bin_size=bin_size,
                       num_jobs=num_jobs,
                       out_dir=out_dir,
-                    #   control_label=control_label,
                       blacklist_file=blacklist_file,
                       alpha_W=alpha_W,
                       alpha_H=alpha_H,
@@ -274,7 +278,7 @@ def run_replicates(input_csv: Optional[Path] = typer.Option(None, "--input_csv",
 
                    ):
     """
-    Preprocess and denoise individual replicates
+    Preprocess and denoise individual replicates.
     """
     typer.echo("Running DecoDen (replicates-specific)")
     _decoden_pipeline(["preprocess", "nmf", "hsr_replicates", "detect"],
@@ -304,7 +308,7 @@ def detect(files_reference: Optional[Path] = typer.Option(None, "--files_referen
                        "control", "--control_label", "-con", help="The label for the control/input samples.")
     ):
     """
-    Detect peaks
+    Detect peaks in the processed DecoDen signals. Must be used with the `replicates` mode.
     """
     typer.echo("Detecting peaks")
     
