@@ -161,7 +161,7 @@ def save_hsr_output(hsr_df, out_dir, replicate_specific=False, files_ref=None):
             f.write(f'track type=bedGraph name="{condition}" description="{condition}" visibility=full color={color1} altColor={color2} priority=20\n')
         bdg_df = hsr_df[[c]].fillna(0.0)
         bdg_df = compress_bdg_df(bdg_df)
-        bdg_df.to_csv(fname, header=False, sep="\t", mode='a')
+        bdg_df.to_csv(fname, header=False, sep="\t", mode='a', index=False)
     
     
     

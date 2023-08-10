@@ -114,12 +114,10 @@ decoden run replicates --help
 
 # Example of calls to run the full DecoDen pipeline
 decoden run consolidate -i "samples.csv" -o "output_directory" -bs 200 -n 2 \
-    --control_label "control" \
     --blacklist_file "hg19-blacklist.v2.bed" \
     --plotting
 
 decoden run replicates -i "samples.csv" -o "output_directory" -bs 200 -n 2 \
-    --control_label "control" \
     --blacklist_file "hg19-blacklist.v2.bed" \
     --plotting
 ```
