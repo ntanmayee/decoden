@@ -73,7 +73,7 @@ This process is available through the commands `decoden denoise consolidate` and
 
 ```sh
 # Print the possible arguments for the denoising commands
-decoden denoise conoslidate --help
+decoden denoise consolidate --help
 decoden denoise replicates --help
 
 
