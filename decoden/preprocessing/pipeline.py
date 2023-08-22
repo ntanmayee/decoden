@@ -117,11 +117,11 @@ def run_single(args):
     replicate = args["replicate"]
     
     files = os.listdir(os.path.join(out_dir, 'data'))
-    tiled_filepath = sample_name + "_filterdup_pileup_tiled.bed"
+    tiled_filepath = sample_name + "_" + exp_name + "_filterdup_pileup_tiled.bed"
     
     if tiled_filepath not in files: 
         assert os.path.exists(input_filepath), f"File {input_filepath} not found"
-        tiled_filepath = run_pipeline(input_filepath, sample_name, out_dir, is_control, bin_size)
+        tiled_filepath = run_pipeline(input_filepath, sample_name + "_" + exp_name, out_dir, is_control, bin_size)
     else:
         logger.info(f'Skipping {input_filepath} as output already exists.')
 

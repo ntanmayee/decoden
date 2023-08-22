@@ -72,6 +72,7 @@ def run_HSR_replicates(replicates, wmat, mmat, bl_mask, conditions_list, conditi
 
     #     control_transf -= np.mean(control_transf)
 
+    control_columns = [c for c in replicates.columns if c.startswith(control_label)]
     treatment_columns = [c for c in replicates.columns if not c.startswith(control_label)]
     # samples_conditions = [c.split("_")[0] for c in treatment_columns]
     tissue_signal = wmat.loc[:, control_label]

@@ -154,7 +154,7 @@ def save_hsr_output(hsr_df, out_dir, replicate_specific=False, files_ref=None):
         
         if replicate_specific:
             label = label_mapping[(condition, replicate)]
-            fname = join(bedgraph_dir, f"{label}_DecoDen.bdg")
+            fname = join(bedgraph_dir, f"{label}_{condition}_DecoDen.bdg")
         else:
             fname = join(bedgraph_dir, f"{condition}_DecoDen.bdg")
         with open(fname, 'w') as f:

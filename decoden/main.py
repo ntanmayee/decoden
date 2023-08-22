@@ -276,6 +276,12 @@ def run_replicates(input_csv: Optional[Path] = typer.Option(None, "--input_csv",
                    plotting: bool = typer.Option(
                        False, "--plotting", "-p", help="Plot sanity checks for extracted matrices."),
 
+                    pval_alpha: float = typer.Option(
+                       0.05, "--pval_alpha", help="Value for multiple hypthesis test correction (BH)."),
+                    peak_threshold: float = typer.Option(
+                       0.01, "--pval_alpha", help="Pvalue threshold for the initial identification of peak regions."),
+                    min_width: int = typer.Option(
+                       150, "--min_width", help="Minimum width in bp for merging and discarding peaks."),
                    ):
     """
     Preprocess and denoise individual replicates.
@@ -294,7 +300,11 @@ def run_replicates(input_csv: Optional[Path] = typer.Option(None, "--input_csv",
                       n_train_bins=n_train_bins,
                       chunk_size=chunk_size,
                       seed=seed,
-                      plotting=plotting
+                      plotting=plotting,
+                      
+                      pval_alpha=pval_alpha,
+                      peak_threshold=peak_threshold,
+                      min_width=min_width
                       )
     typer.echo("\nDecoDen (replicate specific) complete!")
 
@@ -312,10 +322,10 @@ def detect(files_reference: Optional[Path] = typer.Option(None, "--files_referen
     """
     typer.echo("Detecting peaks")
     
-    _decoden_pipeline(["detect"],
-                      files_reference=files_reference,
-                      out_dir=out_dir,
-                      control_label=control_label
-                      )
+    # _decoden_pipeline(["detect"],
+    #                   files_reference=files_reference,
+    #                   out_dir=out_dir,
+    #                   control_label=control_label
+    #                   )
     
-    typer.echo("\nPeak calling complete!")
+    typer.echo("\nTODO implement standalone call!")

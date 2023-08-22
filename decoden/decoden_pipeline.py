@@ -36,7 +36,12 @@ def _decoden_pipeline(pipeline_steps,
                       n_train_bins=None,
                       chunk_size=None,
                       seed=None,
-                      plotting=None
+                      plotting=None,
+                      
+                      # Peak calling arguments
+                      pval_alpha=None,
+                      peak_threshold=None,
+                      min_width=None
                       ):
     
     if "preprocess" in pipeline_steps:
@@ -81,7 +86,9 @@ def _decoden_pipeline(pipeline_steps,
         
     if "detect" in pipeline_steps:
         
-        run_peak_calling(files_reference, out_dir, control_label)
+        run_peak_calling(files_reference, out_dir, control_label, pval_alpha=pval_alpha,
+                            peak_threshold=peak_threshold,
+                            min_width=min_width)
         
     
     
