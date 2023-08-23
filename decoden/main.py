@@ -279,7 +279,7 @@ def run_replicates(input_csv: Optional[Path] = typer.Option(None, "--input_csv",
                     pval_alpha: float = typer.Option(
                        0.05, "--pval_alpha", help="Value for multiple hypthesis test correction (BH)."),
                     peak_threshold: float = typer.Option(
-                       0.01, "--pval_alpha", help="Pvalue threshold for the initial identification of peak regions."),
+                       0.01, "--peak_threshold", help="Pvalue threshold for the initial identification of peak regions."),
                     min_width: int = typer.Option(
                        150, "--min_width", help="Minimum width in bp for merging and discarding peaks."),
                    ):
