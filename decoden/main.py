@@ -315,17 +315,26 @@ def detect(files_reference: Optional[Path] = typer.Option(None, "--files_referen
            out_dir: Optional[Path] = typer.Option(
                        None, "--out_dir", "-o", help="Path to directory where all output files will be written"),
            control_label: str = typer.Option(
-                       "control", "--control_label", "-con", help="The label for the control/input samples.")
+                       "control", "--control_label", "-con", help="The label for the control/input samples."),
+            pval_alpha: float = typer.Option(
+                       0.05, "--pval_alpha", help="Value for multiple hypthesis test correction (BH)."),
+            peak_threshold: float = typer.Option(
+                0.01, "--peak_threshold", help="Pvalue threshold for the initial identification of peak regions."),
+            min_width: int = typer.Option(
+                150, "--min_width", help="Minimum width in bp for merging and discarding peaks."),    
     ):
     """
     Detect peaks in the processed DecoDen signals. Must be used with the `replicates` mode.
     """
     typer.echo("Detecting peaks")
     
-    # _decoden_pipeline(["detect"],
-    #                   files_reference=files_reference,
-    #                   out_dir=out_dir,
-    #                   control_label=control_label
-    #                   )
+    _decoden_pipeline(["detect"],
+                      files_reference=files_reference,
+                      out_dir=out_dir,
+                      control_label=control_label,
+                      pval_alpha=pval_alpha,
+                      peak_threshold=peak_threshold,
+                      min_width=min_width
+                      )
     
-    typer.echo("\nTODO implement standalone call!")
+    typer.echo("\nDecoDen Peak Detection complete!")

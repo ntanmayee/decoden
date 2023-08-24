@@ -10,7 +10,81 @@ import warnings
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from decoden.utils import get_blacklisted_regions_mask, load_files, print_message
+from decoden.utils import get_blacklisted_regions_mask, load_files, adjust_matrices
+from decoden.constants import *
+
+# def extract_mixing_matrix(data_df, conditions_list, conditions_counts_ref, alpha_W=0.01, alpha_H=0.001,
+#                           control_cov_threshold=1.0, n_train_bins=300000, seed=42):
+#     """Extract mixing matrix in the NMF step of DecoDen
+
+#     Args:
+#         data_df (np.array): Data matrix of all samples and conditions
+#         conditions_list (list): List of different experimental conditions
+#         conditions_counts_ref (list): Counts of different conditions
+#         alpha_W (float, optional): Regularisation for the signal matrix. Defaults to 0.01.
+#         alpha_H (float, optional): Regularisation for the mixing matrix. Defaults to 0.001.
+#         control_cov_threshold (float, optional): Minimum coverage for the training data for the NMF. Defaults to 1.0.
+#         n_train_bins (int, optional): Number of training bins for the extraction of the mixing matrix. Defaults to 300000.
+#         seed (int, optional): Random state for reproductibility. Defaults to 42.
+
+#     Returns:
+#         numpy.array: Mixing matrix from NMF
+#     """
+#     # Filter data to have sufficient control coverage
+#     dsel = data_df[(data_df[[c for c in data_df.columns if c.startswith(
+#         conditions_list[0])]] > control_cov_threshold).any(axis=1)]
+#     train_data = dsel.sample(n_train_bins, random_state=seed)
+#     train_data
+
+#     # Extract unspecific signal from control samples
+#     model = NMF(n_components=1, init='random', random_state=0,
+#                 beta_loss=1, solver="mu", alpha_W=alpha_W, alpha_H=alpha_H)
+#     control_cols = [
+#         c for c in data_df.columns if c.startswith(conditions_list[0])]
+#     treatment_cols = [c for c in data_df.columns if c not in control_cols]
+#     W_unspec = model.fit_transform(train_data.loc[:, control_cols])
+#     H_unspec = model.components_
+
+#     # Calculate unspecific signal coefficients for treatment
+#     # I swapped and transposed the matrices to make use of the update_H parameter
+#     W_treat_uns, H_treat_uns, n_iter = non_negative_factorization(train_data.loc[:, treatment_cols].T,
+#                                                                   n_components=1, init="custom",
+#                                                                   H=W_unspec.reshape(1, -1), update_H=False, alpha_W=alpha_W,
+#                                                                   beta_loss=1, solver="mu")
+#     H_unspec_coefs = np.concatenate(
+#         (H_unspec.flatten(), W_treat_uns.T.flatten()))
+
+#     # Subtract the unspecific contribution from the data
+#     # Cap the minimum value to 0 to account for predictions higher than the signal
+#     specific_data_mat = np.maximum(
+#         train_data.values - W_unspec.dot(H_unspec_coefs.reshape(1, -1)), 0)
+#     specific_data_mat.shape
+
+#     # For each modification, extract the specific signal components
+#     treatment_conditions = conditions_list[1:]
+#     n_replicates = [conditions_counts_ref[c] for c in conditions_list]
+#     n_control_replicates = n_replicates[0]
+#     histone_n_replicates = n_replicates[1:]
+#     signal_matrix = [W_unspec]
+#     mixing_matrix = np.zeros((len(conditions_list), np.sum(n_replicates)))
+#     mixing_matrix[0, :] = H_unspec_coefs
+
+#     ix = n_control_replicates
+#     for i, modif in tqdm(enumerate(treatment_conditions)):
+
+#         c = histone_n_replicates[i]
+#         # print(modif, str(ix), str(ix+c))
+#         W_spec, H_spec, n_iter = non_negative_factorization(specific_data_mat[:, ix:ix+c],
+#                                                             n_components=1, beta_loss=1, solver="mu", alpha_W=alpha_W, alpha_H=alpha_H)
+
+#         mixing_matrix[i+1, ix:ix+c] = H_spec
+#         signal_matrix.append(W_spec)
+#         ix += c
+#     mm = pd.DataFrame(mixing_matrix, index=[
+#                       "unspecific"]+treatment_conditions, columns=train_data.columns)
+#     return mm
+
+
 
 
 def extract_mixing_matrix(data_df, conditions_list, conditions_counts_ref, alpha_W=0.01, alpha_H=0.001,
@@ -34,7 +108,7 @@ def extract_mixing_matrix(data_df, conditions_list, conditions_counts_ref, alpha
     dsel = data_df[(data_df[[c for c in data_df.columns if c.startswith(
         conditions_list[0])]] > control_cov_threshold).any(axis=1)]
     train_data = dsel.sample(n_train_bins, random_state=seed)
-    train_data
+    
 
     # Extract unspecific signal from control samples
     model = NMF(n_components=1, init='random', random_state=0,
@@ -58,7 +132,6 @@ def extract_mixing_matrix(data_df, conditions_list, conditions_counts_ref, alpha
     # Cap the minimum value to 0 to account for predictions higher than the signal
     specific_data_mat = np.maximum(
         train_data.values - W_unspec.dot(H_unspec_coefs.reshape(1, -1)), 0)
-    specific_data_mat.shape
 
     # For each modification, extract the specific signal components
     treatment_conditions = conditions_list[1:]
@@ -70,44 +143,46 @@ def extract_mixing_matrix(data_df, conditions_list, conditions_counts_ref, alpha
     mixing_matrix[0, :] = H_unspec_coefs
 
     ix = n_control_replicates
+
+    cross_data_mat = []
     for i, modif in tqdm(enumerate(treatment_conditions)):
 
         c = histone_n_replicates[i]
-        # print(modif, str(ix), str(ix+c))
         W_spec, H_spec, n_iter = non_negative_factorization(specific_data_mat[:, ix:ix+c],
                                                             n_components=1, beta_loss=1, solver="mu", alpha_W=alpha_W, alpha_H=alpha_H)
 
         mixing_matrix[i+1, ix:ix+c] = H_spec
+
+        cross_data_mat.append(
+            np.clip(specific_data_mat[:, ix:ix+c] - W_spec.dot(H_spec), 0, None)
+        )
         signal_matrix.append(W_spec)
         ix += c
-    mm = pd.DataFrame(mixing_matrix, index=[
-                      "unspecific"]+treatment_conditions, columns=train_data.columns)
-    return mm
-
-
-# def extract_mixing_matrix_shared_unspecific(data_df, conditions_list, conditions_counts_ref, alpha_W=0.01, alpha_H=0.001,
-#                           control_cov_threshold=1.0, n_train_bins=300000, seed=42):
-#     """Extract mixing matrix in the NMF step of DecoDen
-
-#     Args:
-#         data_df (np.array): Data matrix of all samples and conditions
-#         conditions_list (list): List of different experimental conditions
-#         conditions_counts_ref (list): Counts of different conditions
-#         alpha_W (float, optional): Regularisation for the signal matrix. Defaults to 0.01.
-#         alpha_H (float, optional): Regularisation for the mixing matrix. Defaults to 0.001.
-#         control_cov_threshold (float, optional): Minimum coverage for the training data for the NMF. Defaults to 1.0.
-#         n_train_bins (int, optional): Number of training bins for the extraction of the mixing matrix. Defaults to 300000.
-#         seed (int, optional): Random state for reproductibility. Defaults to 42.
-
-#     Returns:
-#         numpy.array: Mixing matrix from NMF
-#     """
-#     # Filter data to have sufficient control coverage
-#     dsel = data_df[(data_df[[c for c in data_df.columns if c.startswith(
-#         conditions_list[0])]] > control_cov_threshold).any(axis=1)]
-#     train_data = dsel.sample(n_train_bins, random_state=seed)
     
-#     return []
+    signal_matrix = np.hstack(signal_matrix)
+    cross_data_mat = np.hstack(cross_data_mat)
+    ix = n_control_replicates
+
+    
+    for i, modif in tqdm(enumerate(treatment_conditions)):
+        c = histone_n_replicates[i]
+        excl_idxs = list(range(n_control_replicates)) + list(range(ix, ix+c))
+        cross_samples_idxs = np.array([i for i in range(mixing_matrix.shape[1]) if i not in excl_idxs])
+        
+
+        cross_cond_idxs = np.array([j for j in range(len(treatment_conditions)+1) if j>0 and j!=i+1])
+
+        cond_ix = ix - n_control_replicates
+        cross_mixing_coefs, cross_signal_mat, n_iter = non_negative_factorization(cross_data_mat.T[cond_ix:cond_ix+c,:],
+                                                                      n_components=len(cross_cond_idxs), init="custom",
+                                                                      H=signal_matrix[:,cross_cond_idxs].T , update_H=False, alpha_W=alpha_W,
+                                                                      beta_loss=1, solver="mu")
+        mixing_matrix[cross_cond_idxs, ix:ix+c] = cross_mixing_coefs.T
+        ix += c
+    mm = pd.DataFrame(mixing_matrix, index=[
+                      UNSPECIFIC_SIGNAL_LABEL]+treatment_conditions, columns=train_data.columns)
+    
+    return mm
 
 
 
@@ -140,7 +215,7 @@ def extract_signal(data_df, mmatrix, conditions_list, chunk_size=100000, alpha_W
         processed_W.append(ck_W)
     processed_W = np.vstack(processed_W)
     processed_W = pd.DataFrame(
-        processed_W, index=data_df.index, columns=conditions_list)
+        processed_W, index=data_df.index, columns=[UNSPECIFIC_SIGNAL_LABEL]+conditions_list[1:])
     return processed_W
 
 
@@ -225,10 +300,15 @@ def run_NMF(files_reference,
         mmatrix = extract_mixing_matrix(data_noBL, conditions, conditions_counts, alpha_W=alpha_W, 
                                     alpha_H=alpha_H, control_cov_threshold=control_cov_threshold, 
                                     n_train_bins=n_train_bins, seed=seed)
-        mmatrix.to_csv(join(nmf_folder, "mixing_matrix.csv"))
         
         # Extract signal matrix
         wmatrix = extract_signal(data, mmatrix, conditions, chunk_size=chunk_size, alpha_W=alpha_W, seed=seed)
+        
+        # Rescale matrixes to have comparable signals
+        mmatrix, wmatrix = adjust_matrices(mmatrix, wmatrix, q=0.98)
+        
+        # Save results
+        mmatrix.to_csv(join(nmf_folder, "mixing_matrix.csv"))
         wmatrix.reset_index().to_feather(join(nmf_folder, "signal_matrix.ftr"))
         
         

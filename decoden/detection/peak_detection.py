@@ -121,21 +121,25 @@ def detect_condition_peaks_ttest(condition_df, condition, peak_threshold = 0.01,
     width = out_df["end"] - out_df["start"]
     out_df.loc[(out_df[peak_colname]==1)&(width<min_width), peak_colname] = 0
     out_df = compact_df(out_df.set_index(["seqnames", "start", "end"]))
-
     
+    # Keep only peak regions
+    out_df = out_df[out_df[peak_colname]==1]
+    
+    # Apply Benjamini-Hiochberg correction
     corrected_pvalues = multipletests(out_df[pval_colname], alpha=alpha, method="fdr_bh")
     out_df[peak_colname+" Corrected"] = corrected_pvalues[0].astype(int)
     out_df[pval_colname+" Corrected"] = corrected_pvalues[1]
     if out_df[peak_colname+" Corrected"].sum()<1:
         print(f"\n\nNo peaks found for condition {condition} after BH correction\n\n")
+    out_df = out_df[out_df[peak_colname]==1]
     
-    out_df = out_df[out_df[peak_colname+" Corrected"]==1]
+    # out_df = out_df[out_df[peak_colname+" Corrected"]==1]
 
     peak_counter = 1
     results = []
     for i, row in out_df.iterrows():
         interval = row.end-row.start
-        score = -np.log10(np.max([row[pval_colname], min_pval]))
+        score = -np.log10(np.max([row[pval_colname+" Corrected"], min_pval]))
         label = f"{condition}_n{peak_counter}_w{interval}"
         peak_counter += 1
         results.append({"seqnames": row.seqnames, "start": row.start, "end": row.end,
@@ -167,9 +171,11 @@ def run_peak_calling(files_reference, out_dir, control_label, pval_alpha=None,
         label_mapping[condition].append(f"{label}_{condition}_DecoDen.bdg")
         
     for cond, files in label_mapping.items():
+        print(f"Processing {cond}")
         assert len(files)>1, "Hypothesis testing requires multiple replicates"
         cond_df = load_hsr_results(files, out_dir=out_dir)
         pc_results = detect_condition_peaks_ttest(cond_df, cond, alpha=pval_alpha, peak_threshold=peak_threshold, min_width=min_width)
         pc_results.to_csv(join(peaks_output_dir, f"{cond}_peaks.bed"), sep="\t", header=False, index=False)
+        # pc_results.to_csv(join(peaks_output_dir, f"{cond}_peaks.bed"), sep="\t", index=False)
     
         

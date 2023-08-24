@@ -2,7 +2,7 @@ import numpy as np
 from sklearn.linear_model import LinearRegression
 from tqdm import tqdm
 import warnings
-
+from decoden.constants import UNSPECIFIC_SIGNAL_LABEL
 
 
 def run_HSR(wmat, bl_mask, conditions_list, eps=1e-20):
@@ -14,10 +14,10 @@ def run_HSR(wmat, bl_mask, conditions_list, eps=1e-20):
         conditions_list (list): list of experimental conditions
         eps (_type_, optional): minimum value threshold. Defaults to 1e-20.
     """
-    control_label = conditions_list[0]
+    # control_label = conditions_list[0]
     out_df = wmat.loc[:, []]
 
-    control_transf = wmat.loc[:, control_label].apply(
+    control_transf = wmat.loc[:, UNSPECIFIC_SIGNAL_LABEL].apply(
         lambda x: np.maximum(eps, x)).apply(np.log)
 
 #     control_transf -= np.mean(control_transf)
@@ -67,7 +67,7 @@ def run_HSR_replicates(replicates, wmat, mmat, bl_mask, conditions_list, conditi
     n_control_samples = conditions_counts_ref[control_label]
 
 
-    control_transf = wmat.loc[:, control_label].apply(
+    control_transf = wmat.loc[:, UNSPECIFIC_SIGNAL_LABEL].apply(
         lambda x: np.maximum(eps, x)).apply(np.log)
 
     #     control_transf -= np.mean(control_transf)
@@ -75,15 +75,17 @@ def run_HSR_replicates(replicates, wmat, mmat, bl_mask, conditions_list, conditi
     control_columns = [c for c in replicates.columns if c.startswith(control_label)]
     treatment_columns = [c for c in replicates.columns if not c.startswith(control_label)]
     # samples_conditions = [c.split("_")[0] for c in treatment_columns]
-    tissue_signal = wmat.loc[:, control_label]
+    tissue_signal = wmat.loc[:, UNSPECIFIC_SIGNAL_LABEL]
     for i, treatment_sample in tqdm(enumerate(treatment_columns)):
         # Select only values above the median for the fit, to reduce the contribution of noise
-        sample_condition = treatment_sample.split("_")[0]
+        # sample_condition = treatment_sample.split("_")[0]
+        sample_condition = [(ix, c) for ix, c in enumerate(conditions_list) if c in treatment_sample][0]
         sample_data = replicates.loc[:, treatment_sample]
 
         tissue_coef = mmat.iloc[0, i+n_control_samples]
+        modif_coef = mmat.iloc[sample_condition[0], i+n_control_samples]
 
-        sample_specific_signal = (sample_data - tissue_coef*tissue_signal).clip(eps, None)
+        sample_specific_signal = ((sample_data - tissue_coef*tissue_signal)/modif_coef).clip(eps, None)
         treatment_transf = sample_specific_signal.apply(np.log)
 
         # mean_treatment_transf = np.mean(treatment_transf)
@@ -95,7 +97,7 @@ def run_HSR_replicates(replicates, wmat, mmat, bl_mask, conditions_list, conditi
 
         log_pred = np.maximum(reg.predict(
             control_transf.values.reshape(-1, 1)), np.log(0.5))
-        pred = np.exp(log_pred)
+        # pred = np.exp(log_pred)
     #         track = np.exp(treatment_transf+mean_treatment_transf-log_pred)
         track = np.exp(treatment_transf-log_pred)
         out_df[treatment_sample+" HSR Value"] = track

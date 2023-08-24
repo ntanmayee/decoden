@@ -85,7 +85,8 @@ def _decoden_pipeline(pipeline_steps,
         
         
     if "detect" in pipeline_steps:
-        
+        assert control_label is not None, "Please specify the label used to identify control samples"
+        assert files_reference is not None, "Please specify the file that maps conditions to processed data"
         run_peak_calling(files_reference, out_dir, control_label, pval_alpha=pval_alpha,
                             peak_threshold=peak_threshold,
                             min_width=min_width)

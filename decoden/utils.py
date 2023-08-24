@@ -107,6 +107,22 @@ def extract_control_condition(input_csv_filepath):
     control_label = input_csv[input_csv["is_control"]==1]["exp_name"].iloc[0]
     return control_label
 
+
+
+def adjust_matrices(mixing_matrix, signal_matrix, q=0.98):
+    mmatrix = mixing_matrix.copy()
+    smatrix = signal_matrix.copy()
+    
+    # control_q = np.quantile(signal_matrix.iloc[:,3], q)
+    for ix, col_i in enumerate(range(len(signal_matrix.columns))):
+        quantile = np.quantile(signal_matrix.iloc[:,col_i], q)
+        factor = 1/quantile # control_q/quantile
+        smatrix.iloc[:, col_i] *= factor
+        mmatrix.iloc[ix, :] /= factor
+    
+    return mmatrix, smatrix
+
+
 def compress_bdg_df(df):
     if not "seqnames" in df.columns:
         df = df.reset_index()
