@@ -20,7 +20,7 @@ typer = {extras = ["all"], version = "^0.7.0"}
 MACS2 = "^2.2.6"
 matplotlib = "^3.7.1"
 seaborn = "^0.12.2"
-pyarrow = "^11.0.0"
+pyarrow = "^14.0.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1"
