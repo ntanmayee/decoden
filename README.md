@@ -34,7 +34,7 @@ To generate a skeleton sample annotation file, run -
 ```sh
 decoden create_csv 
 ```
-This will create `samples.csv` in your current directory. Edit this file and fill in the columns with appropriate information.
+This will create `samples.csv` in your current directory. Edit this file and fill in the columns with appropriate information. There are more details [here](https://github.com/ntanmayee/decoden/wiki/Preparing-a-sample-annotation-file).
 
 ### Run DecoDen
 Run the DecoDen pipeline with default parameters -
