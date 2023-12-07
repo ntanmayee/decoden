@@ -1,8 +1,12 @@
+<p align="center">
+    <img src="utils/logo.png" alt="decoden logo">
+</p>
+
 # Multi-assay ChIP-Seq Analysis with DecoDen
 [![DOI:10.1101/2022.10.18.512665](https://img.shields.io/badge/DOI-10.1101/2022.10.18.512665-B31B1B.svg)](https://doi.org/10.1101/2022.10.18.512665)
 ![GPLv3 license](https://img.shields.io/github/license/ntanmayee/DecoDen)
 
-DecoDen uses replicates and multi-histone ChIP-Seq experiments for a target cell type to learn and remove shared biases from fragmentation, PCR amplification and seqeunce mappability.
+DecoDen uses replicates and multi-histone ChIP-Seq experiments for a target cell type to learn and remove shared biases from fragmentation, PCR amplification and sequence mappability.
 
 ## Installation
 1. Install [Poetry](https://python-poetry.org/)
