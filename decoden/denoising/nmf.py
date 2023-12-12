@@ -90,22 +90,23 @@ def extract_mixing_matrix(data_df, conditions_list, conditions_counts_ref, alpha
     cross_data_mat = np.hstack(cross_data_mat)
     ix = n_control_replicates
 
+    if len(treatment_conditions) > 1:
+        for i, modif in tqdm(enumerate(treatment_conditions)):
+            c = histone_n_replicates[i]
+            excl_idxs = list(range(n_control_replicates)) + list(range(ix, ix+c))
+            cross_samples_idxs = np.array([i for i in range(mixing_matrix.shape[1]) if i not in excl_idxs]).astype(int)
+            
+
+            cross_cond_idxs = np.array([j for j in range(len(treatment_conditions)+1) if j>0 and j!=i+1]).astype(int)
+
+            cond_ix = ix - n_control_replicates
+            cross_mixing_coefs, cross_signal_mat, n_iter = non_negative_factorization(cross_data_mat.T[cond_ix:cond_ix+c,:],
+                                                                        n_components=len(cross_cond_idxs), init="custom",
+                                                                        H=signal_matrix[:,cross_cond_idxs].T , update_H=False, alpha_W=alpha_W,
+                                                                        beta_loss=1, solver="mu")
+            mixing_matrix[cross_cond_idxs, ix:ix+c] = cross_mixing_coefs.T
+            ix += c
     
-    for i, modif in tqdm(enumerate(treatment_conditions)):
-        c = histone_n_replicates[i]
-        excl_idxs = list(range(n_control_replicates)) + list(range(ix, ix+c))
-        cross_samples_idxs = np.array([i for i in range(mixing_matrix.shape[1]) if i not in excl_idxs])
-        
-
-        cross_cond_idxs = np.array([j for j in range(len(treatment_conditions)+1) if j>0 and j!=i+1])
-
-        cond_ix = ix - n_control_replicates
-        cross_mixing_coefs, cross_signal_mat, n_iter = non_negative_factorization(cross_data_mat.T[cond_ix:cond_ix+c,:],
-                                                                      n_components=len(cross_cond_idxs), init="custom",
-                                                                      H=signal_matrix[:,cross_cond_idxs].T , update_H=False, alpha_W=alpha_W,
-                                                                      beta_loss=1, solver="mu")
-        mixing_matrix[cross_cond_idxs, ix:ix+c] = cross_mixing_coefs.T
-        ix += c
     mm = pd.DataFrame(mixing_matrix, index=[
                       UNSPECIFIC_SIGNAL_LABEL]+treatment_conditions, columns=train_data.columns)
     
@@ -184,7 +185,7 @@ def run_NMF(files_reference,
         files = json.load(f)
         
     data_folder = os.path.dirname(files_reference) 
-    assert set(conditions) == set([v[0] for v in files.values()]), 'Conditions do not match conditions in reference file. Perhaps there is an error in `--conditions` argument?'
+    assert set(conditions) == set([v['condition'] for v in files.values()]), 'Conditions do not match conditions in reference file. Perhaps there is an error in `--conditions` argument?'
     if not exists(output_folder):
         os.makedirs(output_folder)
 

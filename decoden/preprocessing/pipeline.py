@@ -172,7 +172,6 @@ def run_preprocessing(input_csv, bin_size, num_jobs, out_dir, organism_name):
         Returns:
             list: list of tuples (tiled_filepath, name). `tiled_filepath` is the path to the processed file.
     """
-    print_message()
     preprocess_object = Preprocessor(input_csv, bin_size, num_jobs, out_dir, organism_name)
     preprocess_object.run()
 

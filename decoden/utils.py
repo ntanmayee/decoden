@@ -84,8 +84,9 @@ def load_files(files_ref, data_folder, sample_conditions):
     # read in data
     for npy_file in files_ref:
         counts = np.load(npy_file)
+        condition = files_ref[npy_file]['condition']
         for i, name in enumerate(files_ref[npy_file]['sample_names']):
-            data[name] = counts[:, i]
+            data[f'{condition}_{i+1}'] = counts[:, i]
 
     data.set_index(["seqnames", "start", "end"], inplace=True)
 
