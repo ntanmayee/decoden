@@ -1,18 +1,11 @@
 import typer
 import os
-import json
 import pandas as pd
-from os.path import join
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional
 
 from decoden.decoden_pipeline import _decoden_pipeline
-
-
-from decoden.preprocessing.pipeline import run_preprocessing
-from decoden.utils import print_message, extract_conditions
-from decoden.denoising.nmf import run_NMF
-from decoden.denoising.hsr import run_HSR, run_HSR_replicates
+from decoden.utils import print_message
 
 
 __version__ = "0.1.0"
@@ -26,7 +19,6 @@ app.add_typer(denoise_app, name="denoise", help="""Run the denoising step of Dec
               Use `decoden denoise --help` for more info""")
 app.add_typer(run_app, name="run", help="""Run the full decoden pipeline to preprocess end denoise BAM/BED files.
               Use `decoden run --help` for more info""")
-
 
 
 def version_callback(value: bool):
@@ -79,6 +71,8 @@ def preprocess(
         1, "--num_jobs", "-n", help="Number of parallel jobs for preprocessing."),
     out_dir: Optional[Path] = typer.Option(
         None, "--out_dir", "-o", help="Path to directory where all output files will be written"),
+    assembly_name: str = typer.Option(
+        None, "--assembly_name", "-an", help="Assembly name to extract chrom.sizes"),
 ):
     """
     Preprocess BAM/BED data to be in the correct format for running DecoDen
@@ -90,7 +84,9 @@ def preprocess(
                       input_csv=input_csv,
                       bin_size=bin_size,
                       num_jobs=num_jobs,
-                      out_dir=out_dir)
+                      out_dir=out_dir,
+                      assembly_name=assembly_name
+                      )
 
 
 @denoise_app.command("consolidate")
@@ -199,7 +195,8 @@ def run_consolidate(
         1, "--num_jobs", "-n", help="Number of parallel jobs for preprocessing."),
     out_dir: Optional[Path] = typer.Option(
         None, "--out_dir", "-o", help="Path to directory where all output files will be written"),
-
+    assembly_name: str = typer.Option(
+        None, "--assembly_name", "-an", help="Assembly name to extract chrom.sizes"),
 
     # control_label: str = typer.Option(
     #     "control", "--control_label", "-con", help="The label for the control/input samples."),
@@ -230,6 +227,7 @@ def run_consolidate(
                       bin_size=bin_size,
                       num_jobs=num_jobs,
                       out_dir=out_dir,
+                      assembly_name=assembly_name,
                       blacklist_file=blacklist_file,
                       alpha_W=alpha_W,
                       alpha_H=alpha_H,
@@ -254,7 +252,8 @@ def run_replicates(input_csv: Optional[Path] = typer.Option(None, "--input_csv",
                        1, "--num_jobs", "-n", help="Number of parallel jobs for preprocessing."),
                    out_dir: Optional[Path] = typer.Option(
                        None, "--out_dir", "-o", help="Path to directory where all output files will be written"),
-
+                assembly_name: str = typer.Option(
+                    None, "--assembly_name", "-an", help="Assembly name to extract chrom.sizes"),
 
                 #    control_label: str = typer.Option(
                 #        "control", "--control_label", "-con", help="The label for the control/input samples."),
@@ -292,6 +291,7 @@ def run_replicates(input_csv: Optional[Path] = typer.Option(None, "--input_csv",
                       bin_size=bin_size,
                       num_jobs=num_jobs,
                       out_dir=out_dir,
+                      assembly_name=assembly_name,
                     #   control_label=control_label,
                       blacklist_file=blacklist_file,
                       alpha_W=alpha_W,

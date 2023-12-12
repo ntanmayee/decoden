@@ -74,7 +74,7 @@ class Preprocessor(object):
         
         # create a bed file of chrom sizes to pass to deeptools later
         self.chrom_sizes_path = join(self.out_dir, 'chrom_sizes.bed')
-        self.chrom_sizes['start'] = 0
+        self.chrom_sizes['start'] = 1
         self.chrom_sizes[['chr_name', 'start', 'length']].to_csv(self.chrom_sizes_path, sep='\t', header=False, index=False)
         logger.info('Completed initialisation of chrom.sizes')
 
@@ -148,7 +148,8 @@ class Preprocessor(object):
         self.experiment_conditions[save_path] = {
             'condition': condition,
             'sample_names': sample_names,
-            'filenames': list(group['filepath'])
+            'filenames': list(group['filepath']),
+            'bin_size': self.bin_size
             }
  
     def run(self):

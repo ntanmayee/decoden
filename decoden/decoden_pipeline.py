@@ -53,7 +53,7 @@ def _decoden_pipeline(pipeline_steps,
         Path(out_dir).mkdir(parents=True, exist_ok=True)
 
         control_label = extract_control_condition(input_csv)
-        tiled_files = run_preprocessing(input_csv, bin_size, num_jobs, out_dir)
+        run_preprocessing(input_csv, bin_size, num_jobs, out_dir)
         files_reference = join(out_dir, 'experiment_conditions.json')
         
         

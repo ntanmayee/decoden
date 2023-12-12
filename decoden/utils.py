@@ -18,14 +18,14 @@ dtype_mapping["start"] = int
 dtype_mapping["end"] = int
 
 def print_message():
-    """Print cool opening message when DecoDen in run :) 
+    """Print cool opening message when DecoDen is run :) 
     """
     dirname = Path(__file__).parent.parent
     with open(os.path.join(dirname, 'utils/message.txt')) as fp:
         print(fp.read())
 
 def get_blacklisted_regions_mask(df, bl_regions):
-    """get boolean mask for genmic bins belonging to blacklisted regions
+    """get boolean mask for genomic bins belonging to blacklisted regions
 
     Args:
         df (pandas.DataFrame): Data frame with data
@@ -60,22 +60,34 @@ def load_files(files_ref, data_folder, sample_conditions):
     Returns:
         tuple: (data, conditions_counts)
     """
-
     conditions_counts = {c: 0 for c in sample_conditions}
+    bin_size = None
+    for _, v in files_ref.items():
+        conditions_counts[v['condition']] = len(v['filenames'])
+        bin_size = v['bin_size'] # implicitely assumes all bin sizes are the same
+
+    # create index from chrom.sizes
+    assert os.path.isfile(join(data_folder, 'chrom_sizes.bed')), 'Chromosome sizes `chrom_sizes.bed` are required to consolidate data.'
+    chrom_sizes = pd.read_csv(join(data_folder, 'chrom_sizes.bed'), sep='\t', names=['chr', 'start', 'end'])
+
+    seqnames, starts, ends = [], [], []
+    for _, row in chrom_sizes.iterrows():
+        chr_name, start, end = row['chr'], row['start'], row['end']
+        num_bins = int(np.ceil((end - start)/bin_size))
+        
+        seqnames.extend([chr_name] * num_bins)
+        starts.extend([1 + (bin_size*i) for i in range(num_bins)])
+        ends.extend([bin_size * (i+1) for i in range(num_bins)])
     
-    data = None
-    
-    
-    for fname, (c, rep, label) in tqdm(files_ref.items()):
-        conditions_counts[c] += 1    
-        colname = c+"_"+str(rep)
-        df = pd.read_csv(os.path.join(data_folder, fname), sep="\t", 
-                         names=["seqnames", "start", "end", colname], dtype=dtype_mapping)
-        df.set_index(["seqnames", "start", "end"], inplace=True)
-        if data is None:
-            data = df
-        else:
-            data = pd.merge(data, df, left_index=True, right_index=True)
+    data = pd.DataFrame.from_dict({'seqnames':seqnames, 'start':starts, 'end':ends})
+
+    # read in data
+    for npy_file in files_ref:
+        counts = np.load(npy_file)
+        for i, name in enumerate(files_ref[npy_file]['sample_names']):
+            data[name] = counts[:, i]
+
+    data.set_index(["seqnames", "start", "end"], inplace=True)
 
     return data, conditions_counts
 
@@ -93,8 +105,8 @@ def extract_conditions(json_file, control_label="control"):
     
     conditions = []
     for k, v in json_object.items():
-        if v[0] not in conditions:
-            conditions.append(v[0])
+        if v['condition'] not in conditions:
+            conditions.append(v['condition'])
             
     if not control_label in conditions:
         raise Exception("Invalid label for control condition")
@@ -102,11 +114,11 @@ def extract_conditions(json_file, control_label="control"):
     logger.info(conditions)
     return conditions 
 
+
 def extract_control_condition(input_csv_filepath):
     input_csv = pd.read_csv(input_csv_filepath)
     control_label = input_csv[input_csv["is_control"]==1]["exp_name"].iloc[0]
     return control_label
-
 
 
 def adjust_matrices(mixing_matrix, signal_matrix, q=0.98):
@@ -178,6 +190,4 @@ def save_hsr_output(hsr_df, out_dir, replicate_specific=False, files_ref=None):
         bdg_df = hsr_df[[c]].fillna(0.0)
         bdg_df = compress_bdg_df(bdg_df)
         bdg_df.to_csv(fname, header=False, sep="\t", mode='a', index=False)
-    
-    
-    
+  
