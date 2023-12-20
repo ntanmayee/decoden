@@ -164,7 +164,7 @@ def save_hsr_output(hsr_df, out_dir, replicate_specific=False, files_ref=None):
             label_mapping[(v[0], v[1])] = v[2]
     
     # comment these two lines to get default behaviour
-    hsr_df.reset_index().to_feather(join(out_dir, f"HSR_results{label}.ftr"))
+    hsr_df.reset_index().to_feather(join(out_dir, f"HSR_results.ftr"))
     return
     
     bedgraph_dir = join(out_dir, BEDGRAPH_FOLDER)

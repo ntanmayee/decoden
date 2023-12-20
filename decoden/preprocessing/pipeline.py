@@ -15,6 +15,7 @@ from deeptools import bamHandler
 from deeptools.utilities import getCommonChrNames
 import pysam
 import numpy as np
+from tqdm import tqdm
 
 
 def get_fragment_length(list_of_filepaths, output_dir):
@@ -55,13 +56,14 @@ class Preprocessor(object):
 
         Path(self.out_dir).mkdir(parents=True, exist_ok=True)
         self.read_csv()
-        self.init_chrom_sizes()
 
     def init_chrom_sizes(self):
         logger.info('Initialising chrom.sizes...')
-        
+   
         bam_handles = []
-        for filename in self.input_csv['filepath']:
+        logger.info('Indexing bam files..')
+        for filename in tqdm(self.input_csv['filepath']):
+            pysam.index(filename)
             bam = bamHandler.openBam(filename)
             bam_handles.append(bam)
         
@@ -124,11 +126,6 @@ class Preprocessor(object):
 
         assert len(group.is_control.unique()) == 1, 'BAM files from same condition cannot have mixed `is_control` column'
 
-        # index bam files
-        logger.info('Indexing bam files')
-        for filename in list_of_filepaths:
-            pysam.index(filename)
-
         # count reads
         logger.info('Starting to count reads..')
         readcount_object = crpb.CountReadsPerBin(list_of_filepaths, binLength=self.bin_size, bedFile=self.chrom_sizes_path, 
@@ -157,6 +154,8 @@ class Preprocessor(object):
             }
  
     def run(self):
+        self.init_chrom_sizes()
+
         Path(self.out_dir, 'data').mkdir(parents=True, exist_ok=True)
 
         grouped = self.input_csv.groupby('exp_name')
@@ -173,6 +172,14 @@ class Preprocessor(object):
         json.dump(self.experiment_conditions, open(join(self.out_dir, 'experiment_conditions.json'), 'w'))
         logger.info('Experiment conditions written to file')
 
+    def check_preprocessed(self):
+        # check if .npy files are present in save directory
+        for condition in self.input_csv['exp_name'].unique():
+            save_path = f'{condition}_reads.npy'
+            if save_path not in os.listdir(join(self.out_dir, 'data')):
+                return False         
+        return True
+
 def run_preprocessing(input_csv, bin_size, num_jobs, out_dir, organism_name):
     """Run DecoDen for all samples 
 
@@ -186,7 +193,10 @@ def run_preprocessing(input_csv, bin_size, num_jobs, out_dir, organism_name):
             list: list of tuples (tiled_filepath, name). `tiled_filepath` is the path to the processed file.
     """
     preprocess_object = Preprocessor(input_csv, bin_size, num_jobs, out_dir, organism_name)
-    preprocess_object.run()
+    if not preprocess_object.check_preprocessed():
+        preprocess_object.run()
+    else:
+        logger.info('Exisiting preprocessed files found. Proceeding with existing files.')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
