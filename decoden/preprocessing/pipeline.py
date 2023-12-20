@@ -11,6 +11,8 @@ from decoden.preprocessing.logger import logger
 from decoden.utils import print_message
 import subprocess
 import deeptools.countReadsPerBin as crpb
+from deeptools import bamHandler
+from deeptools.utilities import getCommonChrNames
 import pysam
 import numpy as np
 
@@ -57,25 +59,20 @@ class Preprocessor(object):
 
     def init_chrom_sizes(self):
         logger.info('Initialising chrom.sizes...')
-        if os.path.exists(os.path.dirname(self.organism_name)):
-            try:
-                self.chrom_sizes = pd.read_csv(self.organism_name, sep='\t', names=['chr_name', 'length'])
-            except:
-                logger.error('Cannot read chrom.sizes file. Fatal error.')
-                raise ValueError(f'Unable to read {self.organism_name}. Tab separated file must contain 2 columns with chromosome name and length.')
-        else:
-            logger.info("Trying to download chrom.sizes for given genome assembly")
-            try:
-                url = f'https://hgdownload-test.gi.ucsc.edu/goldenPath/{self.organism_name}/bigZips/{self.organism_name}.chrom.sizes'
-                self.chrom_sizes = pd.read_csv(url, sep='\t', names=['chr_name', 'length'])
-            except: 
-                logger.error('Cannot download genome assembly file. Fatal error.')
-                raise ValueError(f'Unknown assembly: {self.organism_name}')
         
-        # create a bed file of chrom sizes to pass to deeptools later
-        self.chrom_sizes_path = join(self.out_dir, 'chrom_sizes.bed')
+        bam_handles = []
+        for filename in self.input_csv['filepath']:
+            bam = bamHandler.openBam(filename)
+            bam_handles.append(bam)
+        
+        chrom_names_and_size, non_common = getCommonChrNames(bam_handles, verbose=False)
+        assert len(chrom_names_and_size) > 0, "No common chromosomes found. Check `bam` files"
+        self.chrom_sizes = pd.DataFrame(chrom_names_and_size, columns=['chr_name', 'length'])
         self.chrom_sizes['start'] = 1
+
+        self.chrom_sizes_path = join(self.out_dir, 'chrom_sizes.bed')
         self.chrom_sizes[['chr_name', 'start', 'length']].to_csv(self.chrom_sizes_path, sep='\t', header=False, index=False)
+
         logger.info('Completed initialisation of chrom.sizes')
 
     def read_csv(self):
@@ -112,13 +109,20 @@ class Preprocessor(object):
         # estimate fragment length for condition
         logger.info(f'Preprocessing files for {condition}')
         list_of_filepaths = list(group['filepath'].unique())
-        fragment_length = get_fragment_length(list_of_filepaths, self.out_dir)
-        self.fragment_lengths[condition] = fragment_length
 
-        assert len(group.is_control.unique()) == 1, 'BAM files from same condition cannot have mixed `is_control` column'
-        
         # if control, extend reads in both directions
         is_control = True if 1 in group.is_control.unique() else False
+        
+        fragment_length = None
+        if not is_control:
+            fragment_length = get_fragment_length(list_of_filepaths, self.out_dir)
+            self.fragment_lengths[condition] = fragment_length
+        else:
+            fragment_length = np.median(
+                [self.fragment_lengths[a] for a in self.fragment_lengths]
+                )
+
+        assert len(group.is_control.unique()) == 1, 'BAM files from same condition cannot have mixed `is_control` column'
 
         # index bam files
         logger.info('Indexing bam files')
@@ -154,8 +158,17 @@ class Preprocessor(object):
  
     def run(self):
         Path(self.out_dir, 'data').mkdir(parents=True, exist_ok=True)
-        for condition, group in self.input_csv.groupby('exp_name'):
-            self.preprocess_single(condition, group)
+
+        grouped = self.input_csv.groupby('exp_name')
+        control_group_name = None
+        for condition, group in grouped:
+            if 1 not in group['is_control'].unique():
+                self.preprocess_single(condition, group)
+            else:
+                control_group_name = condition
+        control = grouped.get_group(control_group_name)
+        self.preprocess_single(control_group_name, control)
+
         logger.info('Successfully completed computing read coverage for all conditions')
         json.dump(self.experiment_conditions, open(join(self.out_dir, 'experiment_conditions.json'), 'w'))
         logger.info('Experiment conditions written to file')
