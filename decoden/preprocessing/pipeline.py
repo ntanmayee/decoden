@@ -133,7 +133,13 @@ class Preprocessor(object):
                                                  extendReads=fragment_length, verbose=True, center_read=is_control,
                                                  numberOfProcessors=self.num_jobs
                                                  )
-        processed_reads = readcount_object.run()
+        res = []
+        for i in range(len(self.chrom_sizes)):
+            row = self.chrom_sizes.iloc[i]
+            chr_, start, end = row.chr_name, row.start, row.length
+            res.append(readcount_object.count_reads_in_region(chr_, start, end))
+        processed_reads = np.concatenate([r[0] for r in res])
+
         logger.info('Read coverage computed!')
 
         # save results
@@ -152,6 +158,14 @@ class Preprocessor(object):
             'filenames': list(group['filepath']),
             'bin_size': self.bin_size
             }
+        
+    def write_experiment_conditions(self):
+        # reorder experiment conditions because control condition has to be the first
+        file_names = [*self.experiment_conditions]
+        file_names = [file_names[-1]] + file_names[:-1]
+        experiment_conditions = {k: self.experiment_conditions[k] for k in file_names}
+        json.dump(experiment_conditions, open(join(self.out_dir, 'experiment_conditions.json'), 'w'))
+        logger.info('Experiment conditions written to file')
  
     def run(self):
         self.init_chrom_sizes()
@@ -169,15 +183,17 @@ class Preprocessor(object):
         self.preprocess_single(control_group_name, control)
 
         logger.info('Successfully completed computing read coverage for all conditions')
-        json.dump(self.experiment_conditions, open(join(self.out_dir, 'experiment_conditions.json'), 'w'))
-        logger.info('Experiment conditions written to file')
+        self.write_experiment_conditions()
 
     def check_preprocessed(self):
         # check if .npy files are present in save directory
         for condition in self.input_csv['exp_name'].unique():
             save_path = f'{condition}_reads.npy'
-            if save_path not in os.listdir(join(self.out_dir, 'data')):
-                return False         
+            try:
+                if save_path not in os.listdir(join(self.out_dir, 'data')):
+                    return False
+            except FileNotFoundError:
+                return False
         return True
 
 def run_preprocessing(input_csv, bin_size, num_jobs, out_dir, organism_name):
