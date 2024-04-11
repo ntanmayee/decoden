@@ -21,6 +21,8 @@ MACS2 = "^2.2.6"
 matplotlib = "^3.7.1"
 seaborn = "^0.12.2"
 pyarrow = "^14.0.1"
+deeptools = "^3.5"
+statsmodels = "^0.14"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1"

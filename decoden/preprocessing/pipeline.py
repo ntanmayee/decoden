@@ -57,6 +57,13 @@ class Preprocessor(object):
         Path(self.out_dir).mkdir(parents=True, exist_ok=True)
         self.read_csv()
 
+    def get_genome_size(self):
+        if self.organism_name == 'hs':
+            return 3137161264
+        if self.organism_name == 'mm':
+            return 2725765481
+        raise NotImplementedError(f'{self.organism_name} is unknown. Please raise an issue if this is a mistake.')
+
     def init_chrom_sizes(self):
         logger.info('Initialising chrom.sizes...')
    
@@ -107,26 +114,7 @@ class Preprocessor(object):
         
         self.input_csv = input_csv
 
-    def preprocess_single(self, condition, group):
-        # estimate fragment length for condition
-        logger.info(f'Preprocessing files for {condition}')
-        list_of_filepaths = list(group['filepath'].unique())
-
-        # if control, extend reads in both directions
-        is_control = True if 1 in group.is_control.unique() else False
-        
-        fragment_length = None
-        if not is_control:
-            fragment_length = get_fragment_length(list_of_filepaths, self.out_dir)
-            self.fragment_lengths[condition] = fragment_length
-        else:
-            fragment_length = np.median(
-                [self.fragment_lengths[a] for a in self.fragment_lengths]
-                )
-
-        assert len(group.is_control.unique()) == 1, 'BAM files from same condition cannot have mixed `is_control` column'
-
-        # count reads
+    def count_reads(self, list_of_filepaths, fragment_length, is_control):
         logger.info('Starting to count reads..')
         readcount_object = crpb.CountReadsPerBin(list_of_filepaths, binLength=self.bin_size, bedFile=self.chrom_sizes_path, 
                                                  stepSize=self.bin_size, bed_and_bin=True, ignoreDuplicates=True, 
@@ -141,6 +129,36 @@ class Preprocessor(object):
         processed_reads = np.concatenate([r[0] for r in res])
 
         logger.info('Read coverage computed!')
+        return processed_reads
+
+    def preprocess_single(self, condition, group):
+        # estimate fragment length for condition
+        logger.info(f'Preprocessing files for {condition}')
+        list_of_filepaths = list(group['filepath'].unique())
+
+        # if control, extend reads in both directions
+        assert len(group.is_control.unique()) == 1, 'BAM files from same condition cannot have mixed `is_control` column'
+        is_control = True if 1 in group.is_control.unique() else False
+        
+        fragment_length = None
+        if not is_control:
+            fragment_length = get_fragment_length(list_of_filepaths, self.out_dir)
+            self.fragment_lengths[condition] = fragment_length
+
+            # count reads
+            processed_reads = self.count_reads(list_of_filepaths, fragment_length, is_control)
+        else:
+            fragment_length = np.median(
+                [self.fragment_lengths[a] for a in self.fragment_lengths]
+                )
+            self.fragment_lengths[condition] = fragment_length
+
+            # count reads and aggregate
+            simple_cov = self.count_reads(list_of_filepaths, fragment_length, is_control)
+            slocal_background = self.count_reads(list_of_filepaths, 2000, is_control) * (fragment_length / 2000)
+            genome_background = 1/self.get_genome_size()
+            processed_reads = np.maximum(simple_cov, slocal_background)
+            processed_reads = np.maximum(genome_background, processed_reads)
 
         # save results
         save_path = join(self.out_dir, 'data', f'{condition}_reads.npy')
@@ -156,7 +174,8 @@ class Preprocessor(object):
             'condition': condition,
             'sample_names': sample_names,
             'filenames': list(group['filepath']),
-            'bin_size': self.bin_size
+            'bin_size': self.bin_size,
+            'fragment_length': self.fragment_lengths[condition]
             }
         
     def write_experiment_conditions(self):

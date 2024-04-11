@@ -5,7 +5,7 @@ import warnings
 from decoden.constants import UNSPECIFIC_SIGNAL_LABEL
 
 
-def run_HSR(wmat, bl_mask, conditions_list, eps=1e-20):
+def run_HSR(wmat, bl_mask, conditions_list, eps=1e-20, signal_clip=0.1):
     """Run HSR step of DecoDen
 
     Args:
@@ -39,7 +39,7 @@ def run_HSR(wmat, bl_mask, conditions_list, eps=1e-20):
             control_transf[bl_mask].values[fit_ixs].reshape(-1, 1), treatment_transf[bl_mask][fit_ixs])
 
         log_pred = np.maximum(reg.predict(
-            control_transf.values.reshape(-1, 1)), np.log(0.5))
+            control_transf.values.reshape(-1, 1)), np.log(signal_clip))
         pred = np.exp(log_pred)
 #         track = np.exp(treatment_transf+mean_treatment_transf-log_pred)
         track = np.exp(treatment_transf-log_pred)
