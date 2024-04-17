@@ -71,8 +71,8 @@ def preprocess(
         1, "--num_jobs", "-n", help="Number of parallel jobs for preprocessing."),
     out_dir: Optional[Path] = typer.Option(
         None, "--out_dir", "-o", help="Path to directory where all output files will be written"),
-    assembly_name: str = typer.Option(
-        None, "--assembly_name", "-an", help="Assembly name to extract chrom.sizes"),
+    genome_size: str = typer.Option(
+        None, "--genome_size", "-gs", help="Size of genome. Give an integer value. Alternatively, `hs` for Homo sapien and `mm` for Mus musculus are also supported."),
 ):
     """
     Preprocess BAM/BED data to be in the correct format for running DecoDen
@@ -85,7 +85,7 @@ def preprocess(
                       bin_size=bin_size,
                       num_jobs=num_jobs,
                       out_dir=out_dir,
-                      assembly_name=assembly_name
+                      genome_size=genome_size
                       )
 
 
@@ -195,8 +195,8 @@ def run_consolidate(
         1, "--num_jobs", "-n", help="Number of parallel jobs for preprocessing."),
     out_dir: Optional[Path] = typer.Option(
         None, "--out_dir", "-o", help="Path to directory where all output files will be written"),
-    assembly_name: str = typer.Option(
-        None, "--assembly_name", "-an", help="Assembly name to extract chrom.sizes"),
+    genome_size: str = typer.Option(
+        None, "--genome_size", "-gs", help="Assembly name to extract chrom.sizes"),
 
     # control_label: str = typer.Option(
     #     "control", "--control_label", "-con", help="The label for the control/input samples."),
@@ -227,7 +227,7 @@ def run_consolidate(
                       bin_size=bin_size,
                       num_jobs=num_jobs,
                       out_dir=out_dir,
-                      assembly_name=assembly_name,
+                      genome_size=genome_size,
                       blacklist_file=blacklist_file,
                       alpha_W=alpha_W,
                       alpha_H=alpha_H,
@@ -252,8 +252,8 @@ def run_replicates(input_csv: Optional[Path] = typer.Option(None, "--input_csv",
                        1, "--num_jobs", "-n", help="Number of parallel jobs for preprocessing."),
                    out_dir: Optional[Path] = typer.Option(
                        None, "--out_dir", "-o", help="Path to directory where all output files will be written"),
-                assembly_name: str = typer.Option(
-                    None, "--assembly_name", "-an", help="Assembly name to extract chrom.sizes"),
+                genome_size: str = typer.Option(
+                    None, "--genome_size", "-gs", help="Assembly name to extract chrom.sizes"),
 
                 #    control_label: str = typer.Option(
                 #        "control", "--control_label", "-con", help="The label for the control/input samples."),
@@ -291,7 +291,7 @@ def run_replicates(input_csv: Optional[Path] = typer.Option(None, "--input_csv",
                       bin_size=bin_size,
                       num_jobs=num_jobs,
                       out_dir=out_dir,
-                      assembly_name=assembly_name,
+                      genome_size=genome_size,
                     #   control_label=control_label,
                       blacklist_file=blacklist_file,
                       alpha_W=alpha_W,

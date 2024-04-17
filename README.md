@@ -17,7 +17,7 @@ git clone git@github.com:ntanmayee/DecoDen.git
 cd decoden
 
 # Install the external dependencies and DecoDen
-conda install -c bioconda bedops bedtools pyarrow
+conda install pyarrow poetry
 poetry install
 ```
 
@@ -26,7 +26,7 @@ poetry install
 ### Input data
 
 Running decoden requires two inputs:
-1. Aligned reads in `.bam` or `.bed` format from ChIP-Seq experiments
+1. Aligned reads in `.bam` format from ChIP-Seq experiments
 2. Sample annotation file in `.csv` format
 
 #### Auto-generate a sample annotation file

@@ -18,7 +18,7 @@ import numpy as np
 from tqdm import tqdm
 
 
-def get_fragment_length(list_of_filepaths, output_dir):
+def get_fragment_length(list_of_filepaths, output_dir, genome_size):
     """Estimate fragment length. Internally uses `macs2 predictd`.
 
     Args:
@@ -35,7 +35,7 @@ def get_fragment_length(list_of_filepaths, output_dir):
     for filepath in list_of_filepaths:    
         assert os.path.exists(filepath), f"File {filepath} not found"
 
-    result = subprocess.run(f'macs2 predictd -i {" ".join(list_of_filepaths)} -g hs -m 5 50 --outdir {output_dir}', capture_output=True, text=True, shell=True)
+    result = subprocess.run(f'macs2 predictd -i {" ".join(list_of_filepaths)} -g {genome_size} -m 5 50 --outdir {output_dir}', capture_output=True, text=True, shell=True)
     try:
         fragment_length = int([s for s in result.stderr.split('\n') if 'tag size is' in s][0].split()[-2])
     except:
@@ -45,17 +45,29 @@ def get_fragment_length(list_of_filepaths, output_dir):
 
 
 class Preprocessor(object):
-    def __init__(self, input_csv_filepath, bin_size, num_jobs, out_dir, organism_name) -> None:
+    def __init__(self, input_csv_filepath, bin_size, num_jobs, out_dir, genome_size) -> None:
         self.input_csv_filepath = input_csv_filepath
         self.bin_size = bin_size
         self.num_jobs = num_jobs
         self.out_dir = out_dir
-        self.organism_name = organism_name
+        self.genome_size = genome_size
         self.fragment_lengths = {}
         self.experiment_conditions = {}
 
         Path(self.out_dir).mkdir(parents=True, exist_ok=True)
         self.read_csv()
+
+    def get_genome_size(self):
+        if self.genome_size == 'hs':
+            return 3137161264
+        if self.genome_size == 'mm':
+            return 2725765481
+        try:
+            genome_size = int(self.genome_size)
+            assert genome_size > 0
+            return genome_size
+        except:
+            raise NotImplementedError(f'{self.genome_size} is unknown. Genome size should be an integer or `hs` (Homo sapien) or `mm` (Mus musculus). Please raise an issue if this is a mistake.')
 
     def init_chrom_sizes(self):
         logger.info('Initialising chrom.sizes...')
@@ -107,26 +119,7 @@ class Preprocessor(object):
         
         self.input_csv = input_csv
 
-    def preprocess_single(self, condition, group):
-        # estimate fragment length for condition
-        logger.info(f'Preprocessing files for {condition}')
-        list_of_filepaths = list(group['filepath'].unique())
-
-        # if control, extend reads in both directions
-        is_control = True if 1 in group.is_control.unique() else False
-        
-        fragment_length = None
-        if not is_control:
-            fragment_length = get_fragment_length(list_of_filepaths, self.out_dir)
-            self.fragment_lengths[condition] = fragment_length
-        else:
-            fragment_length = np.median(
-                [self.fragment_lengths[a] for a in self.fragment_lengths]
-                )
-
-        assert len(group.is_control.unique()) == 1, 'BAM files from same condition cannot have mixed `is_control` column'
-
-        # count reads
+    def count_reads(self, list_of_filepaths, fragment_length, is_control):
         logger.info('Starting to count reads..')
         readcount_object = crpb.CountReadsPerBin(list_of_filepaths, binLength=self.bin_size, bedFile=self.chrom_sizes_path, 
                                                  stepSize=self.bin_size, bed_and_bin=True, ignoreDuplicates=True, 
@@ -141,6 +134,36 @@ class Preprocessor(object):
         processed_reads = np.concatenate([r[0] for r in res])
 
         logger.info('Read coverage computed!')
+        return processed_reads
+
+    def preprocess_single(self, condition, group):
+        # estimate fragment length for condition
+        logger.info(f'Preprocessing files for {condition}')
+        list_of_filepaths = list(group['filepath'].unique())
+
+        # if control, extend reads in both directions
+        assert len(group.is_control.unique()) == 1, 'BAM files from same condition cannot have mixed `is_control` column'
+        is_control = True if 1 in group.is_control.unique() else False
+        
+        fragment_length = None
+        if not is_control:
+            fragment_length = get_fragment_length(list_of_filepaths, self.out_dir, self.genome_size)
+            self.fragment_lengths[condition] = fragment_length
+
+            # count reads
+            processed_reads = self.count_reads(list_of_filepaths, fragment_length, is_control)
+        else:
+            fragment_length = np.median(
+                [self.fragment_lengths[a] for a in self.fragment_lengths]
+                )
+            self.fragment_lengths[condition] = fragment_length
+
+            # count reads and aggregate
+            simple_cov = self.count_reads(list_of_filepaths, fragment_length, is_control)
+            slocal_background = self.count_reads(list_of_filepaths, 2000, is_control) * (fragment_length / 2000)
+            genome_background = 1/self.get_genome_size()
+            processed_reads = np.maximum(simple_cov, slocal_background)
+            processed_reads = np.maximum(genome_background, processed_reads)
 
         # save results
         save_path = join(self.out_dir, 'data', f'{condition}_reads.npy')
@@ -156,7 +179,8 @@ class Preprocessor(object):
             'condition': condition,
             'sample_names': sample_names,
             'filenames': list(group['filepath']),
-            'bin_size': self.bin_size
+            'bin_size': self.bin_size,
+            'fragment_length': self.fragment_lengths[condition]
             }
         
     def write_experiment_conditions(self):
@@ -196,7 +220,7 @@ class Preprocessor(object):
                 return False
         return True
 
-def run_preprocessing(input_csv, bin_size, num_jobs, out_dir, organism_name):
+def run_preprocessing(input_csv, bin_size, num_jobs, out_dir, genome_size):
     """Run DecoDen for all samples 
 
         Args:
@@ -208,7 +232,7 @@ def run_preprocessing(input_csv, bin_size, num_jobs, out_dir, organism_name):
         Returns:
             list: list of tuples (tiled_filepath, name). `tiled_filepath` is the path to the processed file.
     """
-    preprocess_object = Preprocessor(input_csv, bin_size, num_jobs, out_dir, organism_name)
+    preprocess_object = Preprocessor(input_csv, bin_size, num_jobs, out_dir, genome_size)
     if not preprocess_object.check_preprocessed():
         preprocess_object.run()
     else:
