@@ -18,7 +18,7 @@ import numpy as np
 from tqdm import tqdm
 
 
-def get_fragment_length(list_of_filepaths, output_dir):
+def get_fragment_length(list_of_filepaths, output_dir, genome_size):
     """Estimate fragment length. Internally uses `macs2 predictd`.
 
     Args:
@@ -35,7 +35,7 @@ def get_fragment_length(list_of_filepaths, output_dir):
     for filepath in list_of_filepaths:    
         assert os.path.exists(filepath), f"File {filepath} not found"
 
-    result = subprocess.run(f'macs2 predictd -i {" ".join(list_of_filepaths)} -g hs -m 5 50 --outdir {output_dir}', capture_output=True, text=True, shell=True)
+    result = subprocess.run(f'macs2 predictd -i {" ".join(list_of_filepaths)} -g {genome_size} -m 5 50 --outdir {output_dir}', capture_output=True, text=True, shell=True)
     try:
         fragment_length = int([s for s in result.stderr.split('\n') if 'tag size is' in s][0].split()[-2])
     except:
@@ -45,12 +45,12 @@ def get_fragment_length(list_of_filepaths, output_dir):
 
 
 class Preprocessor(object):
-    def __init__(self, input_csv_filepath, bin_size, num_jobs, out_dir, organism_name) -> None:
+    def __init__(self, input_csv_filepath, bin_size, num_jobs, out_dir, genome_size) -> None:
         self.input_csv_filepath = input_csv_filepath
         self.bin_size = bin_size
         self.num_jobs = num_jobs
         self.out_dir = out_dir
-        self.organism_name = organism_name
+        self.genome_size = genome_size
         self.fragment_lengths = {}
         self.experiment_conditions = {}
 
@@ -58,11 +58,16 @@ class Preprocessor(object):
         self.read_csv()
 
     def get_genome_size(self):
-        if self.organism_name == 'hs':
+        if self.genome_size == 'hs':
             return 3137161264
-        if self.organism_name == 'mm':
+        if self.genome_size == 'mm':
             return 2725765481
-        raise NotImplementedError(f'{self.organism_name} is unknown. Please raise an issue if this is a mistake.')
+        try:
+            genome_size = int(self.genome_size)
+            assert genome_size > 0
+            return genome_size
+        except:
+            raise NotImplementedError(f'{self.genome_size} is unknown. Genome size should be an integer or `hs` (Homo sapien) or `mm` (Mus musculus). Please raise an issue if this is a mistake.')
 
     def init_chrom_sizes(self):
         logger.info('Initialising chrom.sizes...')
@@ -142,7 +147,7 @@ class Preprocessor(object):
         
         fragment_length = None
         if not is_control:
-            fragment_length = get_fragment_length(list_of_filepaths, self.out_dir)
+            fragment_length = get_fragment_length(list_of_filepaths, self.out_dir, self.genome_size)
             self.fragment_lengths[condition] = fragment_length
 
             # count reads
@@ -215,7 +220,7 @@ class Preprocessor(object):
                 return False
         return True
 
-def run_preprocessing(input_csv, bin_size, num_jobs, out_dir, organism_name):
+def run_preprocessing(input_csv, bin_size, num_jobs, out_dir, genome_size):
     """Run DecoDen for all samples 
 
         Args:
@@ -227,7 +232,7 @@ def run_preprocessing(input_csv, bin_size, num_jobs, out_dir, organism_name):
         Returns:
             list: list of tuples (tiled_filepath, name). `tiled_filepath` is the path to the processed file.
     """
-    preprocess_object = Preprocessor(input_csv, bin_size, num_jobs, out_dir, organism_name)
+    preprocess_object = Preprocessor(input_csv, bin_size, num_jobs, out_dir, genome_size)
     if not preprocess_object.check_preprocessed():
         preprocess_object.run()
     else:
