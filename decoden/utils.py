@@ -193,3 +193,4 @@ def save_hsr_output(hsr_df, out_dir, replicate_specific=False, files_ref=None):
         bdg_df = compress_bdg_df(bdg_df)
         bdg_df.to_csv(fname, header=False, sep="\t", mode='a', index=False)
   
+

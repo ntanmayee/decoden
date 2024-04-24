@@ -13,6 +13,19 @@ import seaborn as sns
 from decoden.utils import get_blacklisted_regions_mask, load_files, adjust_matrices
 from decoden.constants import *
 
+def relax_mixing_matrix(data, mmat, smat, alpha_H=0.01, alpha_W=0.001):
+    n_comps = len(mmat)
+    mmat_1, smat_1, n_iter1 = non_negative_factorization(data.T,
+                                                        n_components=n_comps, init="custom",
+                                                        W=mmat.T, H=smat.T, update_H=False, alpha_W=alpha_H,
+                                                        beta_loss=1, solver="mu")
+    smat_2, mmat_2, n_iter2 = non_negative_factorization(data,
+                                                        n_components=n_comps, init="custom",
+                                                        W=smat_1.T, H=mmat_1.T, update_H=False, alpha_W=alpha_W,
+                                                        beta_loss=1, solver="mu")
+    return mmat_2, smat_2
+
+
 
 def extract_mixing_matrix(data_df, conditions_list, conditions_counts_ref, alpha_W=0.01, alpha_H=0.001,
                           control_cov_threshold=1.0, n_train_bins=300000, seed=42):
@@ -106,6 +119,9 @@ def extract_mixing_matrix(data_df, conditions_list, conditions_counts_ref, alpha
                                                                         beta_loss=1, solver="mu")
             mixing_matrix[cross_cond_idxs, ix:ix+c] = cross_mixing_coefs.T
             ix += c
+    
+    # Add relaxation step, where we allow the matrices to vary jointly across modifications
+    mixing_matrix, signal_matrix = relax_mixing_matrix(mixing_matrix, signal_matrix, alpha_H=alpha_H, alpha_W=alpha_W)
     
     mm = pd.DataFrame(mixing_matrix, index=[
                       UNSPECIFIC_SIGNAL_LABEL]+treatment_conditions, columns=train_data.columns)

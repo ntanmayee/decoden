@@ -15,7 +15,7 @@ from pathlib import Path
 from decoden.utils import extract_conditions, save_hsr_output, extract_control_condition
 from decoden.preprocessing.pipeline import run_preprocessing
 from decoden.denoising.nmf import run_NMF
-from decoden.denoising.hsr import run_HSR, run_HSR_replicates
+from decoden.denoising.hsr import run_HSR
 from decoden.detection.peak_detection import run_peak_calling
 
 def _decoden_pipeline(pipeline_steps,
@@ -71,18 +71,13 @@ def _decoden_pipeline(pipeline_steps,
                                                                         seed=seed,
                                                                         plotting=plotting)
         
-    if "hsr_consolidate" in pipeline_steps:
+    if "hsr" in pipeline_steps:
         assert "nmf" in pipeline_steps, "HSR requires NMF as a starting step"
         
         hsr_df = run_HSR(wmatrix, mask, conditions)
         save_hsr_output(hsr_df, out_dir, replicate_specific=False)
     
-    if "hsr_replicates" in pipeline_steps:
-        assert "nmf" in pipeline_steps, "HSR requires NMF as a starting step"
-        
-        hsr_df = run_HSR_replicates(data_noBL, wmatrix, mmatrix, mask, conditions, conditions_counts)
-        save_hsr_output(hsr_df, out_dir, replicate_specific=True, files_ref=files_reference)
-        
+
         
     if "detect" in pipeline_steps:
         assert control_label is not None, "Please specify the label used to identify control samples"
