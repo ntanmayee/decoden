@@ -121,7 +121,7 @@ def extract_mixing_matrix(data_df, conditions_list, conditions_counts_ref, alpha
             ix += c
     
     # Add relaxation step, where we allow the matrices to vary jointly across modifications
-    mixing_matrix, signal_matrix = relax_mixing_matrix(mixing_matrix, signal_matrix, alpha_H=alpha_H, alpha_W=alpha_W)
+    mixing_matrix, signal_matrix = relax_mixing_matrix(train_data, mixing_matrix, signal_matrix, alpha_H=alpha_H, alpha_W=alpha_W)
     
     mm = pd.DataFrame(mixing_matrix, index=[
                       UNSPECIFIC_SIGNAL_LABEL]+treatment_conditions, columns=train_data.columns)
