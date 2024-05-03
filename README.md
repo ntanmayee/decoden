@@ -39,7 +39,7 @@ This will create `samples.csv` in your current directory. Edit this file and fil
 ### Run DecoDen
 Run the DecoDen pipeline with default parameters -
 ```sh
-decoden run replicates -i samples.csv -o output_directory
+decoden run -i samples.csv -o output_directory
 ```
 
 ## Detailed Usage Guidelines
