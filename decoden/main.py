@@ -152,7 +152,7 @@ def run(
     out_dir: Optional[Path] = typer.Option(
         None, "--out_dir", "-o", help="Path to directory where all output files will be written"),
     genome_size: str = typer.Option(
-        None, "--genome_size", "-gs", help="Assembly name to extract chrom.sizes"),
+        None, "--genome_size", "-gs", help="Size of genome. Give an integer value. Alternatively, `hs` for Homo sapien and `mm` for Mus musculus are also supported."),
 
     # control_label: str = typer.Option(
     #     "control", "--control_label", "-con", help="The label for the control/input samples."),
