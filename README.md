@@ -57,3 +57,10 @@ There is more helpful information in the [wiki](https://github.com/ntanmayee/Dec
 
 ## Bug Reports and Suggestions for Improvement
 Please [raise an issue](https://github.com/ntanmayee/DecoDen/issues/new) if you find bugs or if you have any suggestions for improvement.
+
+
+
+## Funding
+
+This project has received funding from the European Union's Framework Programme for Research and Innovation Horizon 2020 (2014-2020) under the Marie Skłodowska-Curie Grant Agreement No. 813533-MSCA-ITN-2018 
+
