@@ -205,11 +205,6 @@ def run_NMF(files_reference,
     if not exists(output_folder):
         os.makedirs(output_folder)
 
-    config = {}
-    
-    with open(join(output_folder, "config.json"), "w") as f:
-        json.dump(config, f, indent=2)
-
 
     # Load data
     data, conditions_counts = load_files(files, data_folder, conditions)
