@@ -18,7 +18,95 @@ import numpy as np
 from tqdm import tqdm
 
 
-def get_fragment_length(list_of_filepaths, output_dir, genome_size):
+
+
+# def get_fragment_length(list_of_filepaths, output_dir, genome_size):
+#     """Estimate fragment length. Internally uses `macs2 predictd`.
+
+#     Args:
+#         list_of_filepaths (list): list of strings to path to file with reads
+
+#     Raises:
+#         Exception: Unable to compute fragment length
+
+#     Returns:
+#         int: estimated fragment length
+#     """
+#     logger.info(f'Getting fragment length for {list_of_filepaths}')
+
+#     for filepath in list_of_filepaths:    
+#         assert os.path.exists(filepath), f"File {filepath} not found"
+
+#     result = subprocess.run(f'macs2 predictd -i {" ".join(list_of_filepaths)} -g {genome_size} -m 5 50 --outdir {output_dir}', capture_output=True, text=True, shell=True)
+#     try:
+#         fragment_length = int([s for s in result.stderr.split('\n') if 'tag size is' in s][0].split()[-2])
+#     except:
+#         logger.error(f'Unable to compute fragment length for {list_of_filepaths}')
+#         raise Exception(f'Unable to compute fragment length for {list_of_filepaths}')
+#     return fragment_length
+
+
+def estimate_fragment_length_bam(filepath, min_fragment_length=40, max_fragment_length=500, max_bps=10_000_000,
+        n_random_points=100):
+    with pysam.AlignmentFile(filepath, "rb") as bam:
+        region = bam.get_reference_name(0)
+        region_length = bam.get_reference_length(region)
+        region_length = min(region_length, max_bps)
+        
+        # Initialize arrays for forward and reverse strand read counts
+        forward_strand = np.zeros(region_length, dtype=int)
+        reverse_strand = np.zeros(region_length, dtype=int)
+
+        # Read alignments from the BAM file
+        for read in bam.fetch(region):
+            if read.is_unmapped:
+                continue
+            if read.is_reverse:
+                if  read.reference_end < region_length:
+                    reverse_strand[read.reference_end - 1] += 1
+            else:
+                if  read.reference_start < region_length:
+                    forward_strand[read.reference_start] += 1
+                       
+
+    if region_length>max_bps:
+        print("Calculating window of maximum coverage")
+        candidate_idxs = np.random.choice(list(range(max_bps//2+1, region_length//2-1)), n_random_points, replace=False)
+        window_width = max_bps//2
+        region_length = max_bps
+
+        coverage_array = forward_strand+reverse_strand
+        
+        window_sums = np.array([np.sum(coverage_array[ix-window_width:ix+window_width]) for ix in candidate_idxs])
+        max_sum_index = candidate_idxs[np.argmax(window_sums)]
+        forward_strand = forward_strand[max_sum_index-window_width:max_sum_index+window_width]
+        reverse_strand = reverse_strand[max_sum_index-window_width:max_sum_index+window_width]
+
+    shifts = np.arange(min_fragment_length, max_fragment_length + 1)
+
+    cross_correlations = np.zeros(len(shifts))
+    # We consider a positive shift to be moving the reverse strand backward
+    print("Calculating Cross-Correlations")
+    for idx, shift in tqdm(enumerate(shifts)):
+        shifted_reverse = np.roll(reverse_strand, -shift)
+        shifted_reverse[-shift:] = 0  # Zero out the end
+        # Calculate cross-correlation
+        cross_correlation = np.sum(forward_strand * shifted_reverse)
+        cross_correlations[idx] = cross_correlation
+
+    # Should we plot the cross-correlation?
+    # fig, ax = plt.subplots(figsize=(10, 7))
+    # ax.plot(shifts, cross_correlations)
+    # ax.set_xlabel("Shift (Fragment length)")
+    # ax.set_ylabel("CrossCorrelation")
+    # plt.show()
+    
+    fragment_length = shifts[np.argmax(cross_correlations)]
+    return fragment_length
+
+
+
+def get_fragment_length(list_of_filepaths, *args):
     """Estimate fragment length. Internally uses `macs2 predictd`.
 
     Args:
@@ -31,17 +119,17 @@ def get_fragment_length(list_of_filepaths, output_dir, genome_size):
         int: estimated fragment length
     """
     logger.info(f'Getting fragment length for {list_of_filepaths}')
-
+    fragment_lengths = []
     for filepath in list_of_filepaths:    
         assert os.path.exists(filepath), f"File {filepath} not found"
 
-    result = subprocess.run(f'macs2 predictd -i {" ".join(list_of_filepaths)} -g {genome_size} -m 5 50 --outdir {output_dir}', capture_output=True, text=True, shell=True)
-    try:
-        fragment_length = int([s for s in result.stderr.split('\n') if 'tag size is' in s][0].split()[-2])
-    except:
-        logger.error(f'Unable to compute fragment length for {list_of_filepaths}')
-        raise Exception(f'Unable to compute fragment length for {list_of_filepaths}')
-    return fragment_length
+        try:
+            fragment_length = estimate_fragment_length_bam(filepath)
+            fragment_lengths.append(fragment_length)
+        except:
+            logger.error(f'Unable to compute fragment length for {list_of_filepaths}')
+            raise Exception(f'Unable to compute fragment length for {list_of_filepaths}')
+    return int(np.median(fragment_lengths))
 
 
 class Preprocessor(object):
