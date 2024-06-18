@@ -15,7 +15,7 @@ joblib = "^1.2.0"
 numpy = "^1.24.2"
 pandas = "^2.0.0"
 tqdm = "^4.66.3"
-scikit-learn = "^1.2.2"
+scikit-learn = "^1.5.0"
 typer = {extras = ["all"], version = "^0.7.0"}
 MACS2 = "^2.2.6"
 matplotlib = "^3.7.1"
