@@ -152,6 +152,18 @@ def compress_bdg_df(df):
     compressed_df = pd.DataFrame(compressed_df)
     return compressed_df
 
+def get_genome_size(genome_size):
+        if genome_size == 'hs':
+            return 3137161264
+        if genome_size == 'mm':
+            return 2725765481
+        try:
+            genome_size = int(genome_size)
+            assert genome_size > 0
+            return genome_size
+        except:
+            raise NotImplementedError(f'{genome_size} is unknown. Genome size should be an integer or `hs` (Homo sapien) or `mm` (Mus musculus). Please raise an issue if this is a mistake.')
+
 def save_hsr_output(hsr_df, out_dir, replicate_specific=False, files_ref=None):
     print("\nSaving HSR output")
     # label="_replicates" if replicate_specific else "_consolidated"
