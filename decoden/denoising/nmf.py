@@ -252,14 +252,14 @@ def run_NMF(files_reference,
         mmatrix, wmatrix = adjust_matrices(mmatrix, wmatrix, q=0.98)
 
         # Smooth the chromatin bias (unspecific signal)
-        chrom_bias = wmatrix[0, :]
+        chrom_bias = wmatrix.iloc[ : , 0]
         slocal_background = maximum_filter1d(chrom_bias, size=int(1000/bin_size), mode='nearest') * (bin_size / 1000)
         llocal_background = maximum_filter1d(chrom_bias, size=int(10000/bin_size), mode='nearest') * (bin_size / 10000)
         genome_background = 1/get_genome_size(genome_size)
         chrom_bias = np.maximum(chrom_bias, slocal_background)
         chrom_bias = np.maximum(chrom_bias, llocal_background)
         chrom_bias = chrom_bias = np.maximum(chrom_bias, genome_background)
-        wmatrix[0, :] = chrom_bias
+        wmatrix.iloc[ : , 0] = chrom_bias
 
         # Save results
         mmatrix.to_csv(join(nmf_folder, "mixing_matrix.csv"))
