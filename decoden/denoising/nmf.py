@@ -249,7 +249,7 @@ def run_NMF(files_reference,
         wmatrix = extract_signal(data, mmatrix, conditions, chunk_size=chunk_size, alpha_W=alpha_W, seed=seed)
         
         # Rescale matrixes to have comparable signals
-        mmatrix, wmatrix = adjust_matrices(mmatrix, wmatrix, q=0.98)
+        # mmatrix, wmatrix = adjust_matrices(mmatrix, wmatrix, q=0.98)
 
         # Smooth the chromatin bias (unspecific signal)
         chrom_bias = wmatrix.iloc[ : , 0]
