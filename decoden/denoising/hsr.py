@@ -33,8 +33,11 @@ def run_HSR(wmat, bl_mask, conditions_list, eps=1e-20, signal_clip=0.1):
         if (np.median(treatment_transf[bl_mask]) < 1) or (np.median(treatment_transf[bl_mask]) < 1):
             warnings.warn("Treatment/Control coverage might be too low for half-sibling regression to be effective!")
 
-        fit_ixs = np.where((control_transf[bl_mask] > np.median(control_transf[bl_mask])) & (
-            treatment_transf[bl_mask] > np.median(treatment_transf[bl_mask])))[0]
+        # fit_ixs = np.where((control_transf[bl_mask] > np.median(control_transf[bl_mask])) & (
+        #     treatment_transf[bl_mask] > np.median(treatment_transf[bl_mask])))[0]
+        
+        threshold = 0.1  # sort of arbitrary
+        fit_ixs = np.where((control_transf[bl_mask] > threshold) & (treatment_transf[bl_mask] > threshold))[0]
         reg = LinearRegression(fit_intercept=False).fit(
             control_transf[bl_mask].values[fit_ixs].reshape(-1, 1), treatment_transf[bl_mask][fit_ixs])
 
@@ -42,7 +45,7 @@ def run_HSR(wmat, bl_mask, conditions_list, eps=1e-20, signal_clip=0.1):
             control_transf.values.reshape(-1, 1)), np.log(signal_clip))
         pred = np.exp(log_pred)
 #         track = np.exp(treatment_transf+mean_treatment_transf-log_pred)
-        track = np.exp(treatment_transf-log_pred)
-        out_df[treatment_cond+" HSR Value"] = track
+        track = np.exp(treatment_transf - log_pred)
+        out_df[treatment_cond + " HSR Value"] = track
 
     return out_df

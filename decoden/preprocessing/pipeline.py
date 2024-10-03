@@ -16,6 +16,7 @@ from deeptools.utilities import getCommonChrNames
 import pysam
 import numpy as np
 from tqdm import tqdm
+from functools import reduce
 
 
 def get_fragment_length(list_of_filepaths, output_dir, genome_size):
@@ -135,6 +136,16 @@ class Preprocessor(object):
 
         logger.info('Read coverage computed!')
         return processed_reads
+    
+    def normalise_library_size(self, list_of_filepaths, processed_reads, target_library_size=2.5e7):
+        # normalise to fixed library size, choose conservative estimate to prevent
+        # amplification of noise. 25 million is default
+        for i, bam_file in enumerate(list_of_filepaths):
+            library_size = reduce(lambda x, y: x + y, [
+    int(line.split('\t')[-2]) if len(line) > 0 else 0 for line in pysam.idxstats(bam_file).split('\n')])
+            processed_reads[:, i] *= (target_library_size/library_size)
+            logger.info(f'Library multiplier size = {(target_library_size/library_size)}')
+        return processed_reads
 
     def preprocess_single(self, condition, group):
         # estimate fragment length for condition
@@ -145,25 +156,22 @@ class Preprocessor(object):
         assert len(group.is_control.unique()) == 1, 'BAM files from same condition cannot have mixed `is_control` column'
         is_control = True if 1 in group.is_control.unique() else False
         
+        # fragment length
         fragment_length = None
         if not is_control:
             fragment_length = get_fragment_length(list_of_filepaths, self.out_dir, self.genome_size)
             self.fragment_lengths[condition] = fragment_length
-
-            # count reads
-            processed_reads = self.count_reads(list_of_filepaths, fragment_length, is_control)
         else:
             fragment_length = np.median(
                 [self.fragment_lengths[a] for a in self.fragment_lengths]
                 )
             self.fragment_lengths[condition] = fragment_length
 
-            # count reads and aggregate
-            simple_cov = self.count_reads(list_of_filepaths, fragment_length, is_control)
-            slocal_background = self.count_reads(list_of_filepaths, 2000, is_control) * (fragment_length / 2000)
-            genome_background = 1/self.get_genome_size()
-            processed_reads = np.maximum(simple_cov, slocal_background)
-            processed_reads = np.maximum(genome_background, processed_reads)
+        # count reads and aggregate
+        processed_reads = self.count_reads(list_of_filepaths, fragment_length, is_control)
+            
+        # normalise to fixed library size
+        processed_reads = self.normalise_library_size(list_of_filepaths, processed_reads)
 
         # save results
         save_path = join(self.out_dir, 'data', f'{condition}_reads.npy')

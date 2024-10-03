@@ -59,7 +59,9 @@ def _decoden_pipeline(pipeline_steps,
         
     if "nmf" in pipeline_steps:        
         conditions = extract_conditions(files_reference, control_label=control_label)
-        wmatrix, mmatrix, data_noBL, mask, conditions_counts = run_NMF(files_reference, 
+        wmatrix, mmatrix, data_noBL, mask, conditions_counts = run_NMF(files_reference,
+                                                                        bin_size,
+                                                                        genome_size, 
                                                                         conditions, 
                                                                         out_dir, 
                                                                         blacklist_file=blacklist_file,

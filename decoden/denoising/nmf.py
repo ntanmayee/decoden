@@ -9,8 +9,9 @@ from pathlib import Path
 import warnings
 import matplotlib.pyplot as plt
 import seaborn as sns
+from scipy.ndimage.filters import maximum_filter1d
 
-from decoden.utils import get_blacklisted_regions_mask, load_files, adjust_matrices
+from decoden.utils import get_blacklisted_regions_mask, load_files, adjust_matrices, get_genome_size
 from decoden.constants import *
 
 def relax_mixing_matrix(data, mmat, smat, alpha_H=0.01, alpha_W=0.001):
@@ -161,7 +162,9 @@ def extract_signal(data_df, mmatrix, conditions_list, chunk_size=100000, alpha_W
     return processed_W
 
 
-def run_NMF(files_reference, 
+def run_NMF(files_reference,
+        bin_size,
+        genome_size, 
         conditions, 
         output_folder, 
         blacklist_file=None,
@@ -179,6 +182,8 @@ def run_NMF(files_reference,
     Args:
         files_reference: Path to JSON file with experiment conditions. 
                         If you used DecoDen for pre-processing, use the `experiment_conditions.json` file
+        bin_size: bin size
+        genome_size: genome size to calculate background
         conditions: list of experimental conditions. First condition MUST correspond to the control/input samples.
         output_folder: Path to output directory
         blacklist_file: Path to blacklist file. Make sure to use the blacklist that is appropriate for the genome assembly/organism.
@@ -239,8 +244,18 @@ def run_NMF(files_reference,
         wmatrix = extract_signal(data, mmatrix, conditions, chunk_size=chunk_size, alpha_W=alpha_W, seed=seed)
         
         # Rescale matrixes to have comparable signals
-        mmatrix, wmatrix = adjust_matrices(mmatrix, wmatrix, q=0.98)
-        
+        # mmatrix, wmatrix = adjust_matrices(mmatrix, wmatrix, q=0.98)
+
+        # Smooth the chromatin bias (unspecific signal)
+        chrom_bias = wmatrix.iloc[ : , 0]
+        slocal_background = maximum_filter1d(chrom_bias, size=int(1000/bin_size), mode='nearest') * (bin_size / 1000)
+        llocal_background = maximum_filter1d(chrom_bias, size=int(10000/bin_size), mode='nearest') * (bin_size / 10000)
+        genome_background = 1/get_genome_size(genome_size)
+        chrom_bias = np.maximum(chrom_bias, slocal_background)
+        chrom_bias = np.maximum(chrom_bias, llocal_background)
+        chrom_bias = chrom_bias = np.maximum(chrom_bias, genome_background)
+        wmatrix.iloc[ : , 0] = chrom_bias
+
         # Save results
         mmatrix.to_csv(join(nmf_folder, "mixing_matrix.csv"))
         wmatrix.reset_index().to_feather(join(nmf_folder, "signal_matrix.ftr"))
@@ -253,8 +268,6 @@ def run_NMF(files_reference,
             sns.heatmap(mmatrix, annot=True, fmt=".2f", ax=ax)
             fig.savefig(join(nmf_folder, "mixing_matrix.pdf"), bbox_inches="tight")
             plt.close(fig)
-
-
 
             # Sanity check plots
             plt.ioff()
