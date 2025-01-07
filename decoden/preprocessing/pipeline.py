@@ -54,6 +54,7 @@ class Preprocessor(object):
         self.genome_size = genome_size
         self.fragment_lengths = {}
         self.experiment_conditions = {}
+        self.target_lib_size = None
 
         Path(self.out_dir).mkdir(parents=True, exist_ok=True)
         self.read_csv()
@@ -137,14 +138,13 @@ class Preprocessor(object):
         logger.info('Read coverage computed!')
         return processed_reads
     
-    def normalise_library_size(self, list_of_filepaths, processed_reads, target_library_size=2.5e7):
-        # normalise to fixed library size, choose conservative estimate to prevent
-        # amplification of noise. 25 million is default
+    def normalise_library_size(self, list_of_filepaths, processed_reads):
+        # normalise to fixed library size
         for i, bam_file in enumerate(list_of_filepaths):
             library_size = reduce(lambda x, y: x + y, [
     int(line.split('\t')[-2]) if len(line) > 0 else 0 for line in pysam.idxstats(bam_file).split('\n')])
-            processed_reads[:, i] *= (target_library_size/library_size)
-            logger.info(f'Library multiplier size = {(target_library_size/library_size)}')
+            processed_reads[:, i] *= (self.target_lib_size/library_size)
+            logger.info(f'Library multiplier size = {(self.target_lib_size/library_size)}')
         return processed_reads
 
     def preprocess_single(self, condition, group):
@@ -198,12 +198,25 @@ class Preprocessor(object):
         experiment_conditions = {k: self.experiment_conditions[k] for k in file_names}
         json.dump(experiment_conditions, open(join(self.out_dir, 'experiment_conditions.json'), 'w'))
         logger.info('Experiment conditions written to file')
+
+    def compute_target_lib_size(self):
+        # create new column in self.input_csv storing library sizes
+        logger.info('Estimating target library size')
+        lib_sizes = []
+        for filename in list(self.input_csv['filepath']):
+            library_size = reduce(lambda x, y: x + y, [
+                int(line.split('\t')[-2]) if len(line) > 0 else 0 for line in pysam.idxstats(filename).split('\n')])
+            lib_sizes.append(library_size)
+        # self.input_csv['lib_size'] = lib_sizes
+        self.target_lib_size = np.min(lib_sizes)
+        logger.info(f'Target library size is {self.target_lib_size}')
  
     def run(self):
         self.init_chrom_sizes()
 
         Path(self.out_dir, 'data').mkdir(parents=True, exist_ok=True)
 
+        self.compute_target_lib_size()
         grouped = self.input_csv.groupby('exp_name')
         control_group_name = None
         for condition, group in grouped:

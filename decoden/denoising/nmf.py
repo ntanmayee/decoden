@@ -219,6 +219,10 @@ def run_NMF(files_reference,
     # Load data
     data, conditions_counts = load_files(files, data_folder, conditions)
 
+    # Get bin_size
+    a_key = list(files.keys())[0]
+    bin_size = files[a_key]['bin_size']
+
     # Filter BL regions
     if blacklist_file is not None:
         bl_regions = pd.read_csv(blacklist_file,
@@ -247,9 +251,6 @@ def run_NMF(files_reference,
         
         # Extract signal matrix
         wmatrix = extract_signal(data, mmatrix, conditions, chunk_size=chunk_size, alpha_W=alpha_W, seed=seed)
-        
-        # Rescale matrixes to have comparable signals
-        # mmatrix, wmatrix = adjust_matrices(mmatrix, wmatrix, q=0.98)
 
         # Smooth the chromatin bias (unspecific signal)
         chrom_bias = wmatrix.iloc[ : , 0]
@@ -258,8 +259,11 @@ def run_NMF(files_reference,
         genome_background = 1/get_genome_size(genome_size)
         chrom_bias = np.maximum(chrom_bias, slocal_background)
         chrom_bias = np.maximum(chrom_bias, llocal_background)
-        chrom_bias = chrom_bias = np.maximum(chrom_bias, genome_background)
+        chrom_bias = np.maximum(chrom_bias, genome_background)
         wmatrix.iloc[ : , 0] = chrom_bias
+
+        # Rescale matrixes to have comparable signals
+        mmatrix, wmatrix = adjust_matrices(mmatrix, wmatrix, q=0.98)
 
         # Save results
         mmatrix.to_csv(join(nmf_folder, "mixing_matrix.csv"))

@@ -33,11 +33,13 @@ def run_HSR(wmat, bl_mask, conditions_list, eps=1e-20, signal_clip=0.1):
         if (np.median(treatment_transf[bl_mask]) < 1) or (np.median(treatment_transf[bl_mask]) < 1):
             warnings.warn("Treatment/Control coverage might be too low for half-sibling regression to be effective!")
 
-        # fit_ixs = np.where((control_transf[bl_mask] > np.median(control_transf[bl_mask])) & (
-        #     treatment_transf[bl_mask] > np.median(treatment_transf[bl_mask])))[0]
+        fit_ixs = np.where((control_transf[bl_mask] > np.median(control_transf[bl_mask])) & (
+            treatment_transf[bl_mask] > np.median(treatment_transf[bl_mask])))[0]
         
-        threshold = 0.1  # sort of arbitrary
-        fit_ixs = np.where((control_transf[bl_mask] > threshold) & (treatment_transf[bl_mask] > threshold))[0]
+        # threshold_control = np.maximum(np.quantile(control_transf[bl_mask], 0.5), 0.1)
+        # threshold_treatment = np.maximum(np.quantile(treatment_transf[bl_mask], 0.5), 0.1)
+        # fit_ixs = np.where((control_transf[bl_mask] > threshold_control) & (treatment_transf[bl_mask] > threshold_treatment))[0]
+
         reg = LinearRegression(fit_intercept=False).fit(
             control_transf[bl_mask].values[fit_ixs].reshape(-1, 1), treatment_transf[bl_mask][fit_ixs])
 
