@@ -210,9 +210,12 @@ def run_NMF(files_reference,
     if not exists(output_folder):
         os.makedirs(output_folder)
 
-
     # Load data
     data, conditions_counts = load_files(files, data_folder, conditions)
+
+    # Get bin_size
+    a_key = list(files.keys())[0]
+    bin_size = files[a_key]['bin_size']
 
     # Filter BL regions
     if blacklist_file is not None:
@@ -253,7 +256,7 @@ def run_NMF(files_reference,
         genome_background = 1/get_genome_size(genome_size)
         chrom_bias = np.maximum(chrom_bias, slocal_background)
         chrom_bias = np.maximum(chrom_bias, llocal_background)
-        chrom_bias = chrom_bias = np.maximum(chrom_bias, genome_background)
+        chrom_bias = np.maximum(chrom_bias, genome_background)
         wmatrix.iloc[ : , 0] = chrom_bias
 
         # Save results
