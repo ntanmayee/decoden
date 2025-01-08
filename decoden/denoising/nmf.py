@@ -201,6 +201,7 @@ def run_NMF(files_reference,
     assert chunk_size > 0, 'Chunk size must be greater than 0'
     assert alpha_W > 0, '`alpha_W` must be greater than 0'
     assert alpha_H > 0, '`alpha_H` must be greater than 0'
+    assert genome_size is not None, '`genome_size` cannnot be None'
 
     with open(files_reference, "r") as f:
         files = json.load(f)
