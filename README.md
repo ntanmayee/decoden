@@ -2,8 +2,8 @@
     <img src="utils/logo.png" alt="decoden logo">
 </p>
 
-# Multi-assay ChIP-Seq Analysis with DecoDen
-[![DOI:10.1101/2022.10.18.512665](https://img.shields.io/badge/DOI-10.1101/2022.10.18.512665-B31B1B.svg)](https://doi.org/10.1101/2022.10.18.512665)
+# Learning Shared Chromatin Landscapes and Joint De-Noising of Histone Modification Assays with DecoDen
+[![DOI:10.1101/2025.03.04.641154](https://img.shields.io/badge/DOI-10.1101/2025.03.04.641154.svg)](https://doi.org/10.1101/2025.03.04.641154)
 ![GPLv3 license](https://img.shields.io/github/license/ntanmayee/DecoDen)
 
 DecoDen uses replicates and multi-histone ChIP-Seq experiments for a target cell type to learn and remove shared biases from fragmentation, PCR amplification and sequence mappability.
