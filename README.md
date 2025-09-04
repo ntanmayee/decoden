@@ -8,6 +8,8 @@
 
 DecoDen uses replicates and multi-histone ChIP-Seq experiments for a target cell type to learn and remove shared biases from fragmentation, PCR amplification and sequence mappability.
 
+**NEW!** Check out the [Jupyter notebook tutorial](https://github.com/ntanmayee/decoden/blob/main/tutorial/quick_start_tutorial.ipynb), or read on.
+
 ## Installation
 
 The installation of DecoDen is currently offered as a Poetry project while in development. The procedure proposed requires a local installation of git and a C compiler.
