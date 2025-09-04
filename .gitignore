@@ -1,3 +1,6 @@
+tutorial/.ipynb_checkpoints
+tutorial/toy/
+tutorial/toy.tar.gz
 *.pyc
 .pytest_cache
 .ipynb_checkpoints/
