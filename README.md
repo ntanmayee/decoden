@@ -19,7 +19,7 @@ We recommend the use of Conda to create a suitable environment, with a command s
 2. Clone the repository and install with poetry by running these commands
 ```sh
 # Clone the repository
-git clone git@github.com:ntanmayee/DecoDen.git
+git clone git@github.com:ntanmayee/decoden.git
 cd decoden
 
 # Install the external dependencies and DecoDen
