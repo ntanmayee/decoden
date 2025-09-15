@@ -15,8 +15,8 @@ DecoDen uses replicates and multi-histone ChIP-Seq experiments for a target cell
 The installation of DecoDen is currently offered as a Poetry project while in development. The procedure proposed requires a local installation of git and a C compiler.
 We recommend the use of Conda to create a suitable environment, with a command such as `conda create -n decoden python>=3.10`. After the activation of the environment (`conda activate decoden`), follow these steps:
 
-1. Install [Poetry](https://python-poetry.org/)
-2. Clone the repository and install with poetry
+1. Install [Poetry](https://python-poetry.org/) (Run `conda install anaconda::poetry`)
+2. Clone the repository and install with poetry by running these commands
 ```sh
 # Clone the repository
 git clone git@github.com:ntanmayee/DecoDen.git
