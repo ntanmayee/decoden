@@ -2,22 +2,33 @@
     <img src="utils/logo.png" alt="decoden logo">
 </p>
 
-# Multi-assay ChIP-Seq Analysis with DecoDen
-[![DOI:10.1101/2022.10.18.512665](https://img.shields.io/badge/DOI-10.1101/2022.10.18.512665-B31B1B.svg)](https://doi.org/10.1101/2022.10.18.512665)
+# Learning Shared Chromatin Landscapes and Joint De-Noising of Histone Modification Assays with DecoDen
+[![DOI:10.1101/2025.03.04.641154](https://img.shields.io/badge/DOI-10.1101/2025.03.04.641154.svg)](https://doi.org/10.1101/2025.03.04.641154)
 ![GPLv3 license](https://img.shields.io/github/license/ntanmayee/DecoDen)
 
 DecoDen uses replicates and multi-histone ChIP-Seq experiments for a target cell type to learn and remove shared biases from fragmentation, PCR amplification and sequence mappability.
 
+**NEW!** Check out the [Jupyter notebook tutorial](https://github.com/ntanmayee/decoden/blob/main/tutorial/quick_start_tutorial.ipynb), or read on.
+
 ## Installation
-1. Install [Poetry](https://python-poetry.org/)
-2. Clone the repository and install with poetry
+
+The installation of DecoDen is currently offered as a Poetry project while in development. The procedure proposed requires a local installation of git and a C compiler.
+We recommend the use of Conda to create a suitable environment, with a command such as `conda create -n decoden python>=3.10`. After the activation of the environment (`conda activate decoden`), follow these steps:
+
+1. Install [Poetry](https://python-poetry.org/) (Run `conda install anaconda::poetry`)
+2. Clone the repository and install with poetry by running these commands
 ```sh
 # Clone the repository
-git clone git@github.com:ntanmayee/DecoDen.git
+git clone git@github.com:ntanmayee/decoden.git
 cd decoden
 
 # Install the external dependencies and DecoDen
 conda install pyarrow poetry
+conda install samtools zlib
+
+# If there is no C compiler installed include also the following command
+conda install c-compiler
+
 poetry install
 ```
 
@@ -57,3 +68,10 @@ There is more helpful information in the [wiki](https://github.com/ntanmayee/Dec
 
 ## Bug Reports and Suggestions for Improvement
 Please [raise an issue](https://github.com/ntanmayee/DecoDen/issues/new) if you find bugs or if you have any suggestions for improvement.
+
+
+
+## Funding
+
+This project has received funding from the European Union's Framework Programme for Research and Innovation Horizon 2020 (2014-2020) under the Marie Skłodowska-Curie Grant Agreement No. 813533-MSCA-ITN-2018 
+

@@ -201,6 +201,7 @@ def run_NMF(files_reference,
     assert chunk_size > 0, 'Chunk size must be greater than 0'
     assert alpha_W > 0, '`alpha_W` must be greater than 0'
     assert alpha_H > 0, '`alpha_H` must be greater than 0'
+    assert genome_size is not None, '`genome_size` cannnot be None'
 
     with open(files_reference, "r") as f:
         files = json.load(f)
@@ -209,12 +210,6 @@ def run_NMF(files_reference,
     assert set(conditions) == set([v['condition'] for v in files.values()]), 'Conditions do not match conditions in reference file. Perhaps there is an error in `--conditions` argument?'
     if not exists(output_folder):
         os.makedirs(output_folder)
-
-    config = {}
-    
-    with open(join(output_folder, "config.json"), "w") as f:
-        json.dump(config, f, indent=2)
-
 
     # Load data
     data, conditions_counts = load_files(files, data_folder, conditions)
