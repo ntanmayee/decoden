@@ -6,6 +6,8 @@
   ██████╔╝███████╗╚██████╗╚██████╔╝██████╔╝███████╗██║ ╚████║
   ╚═════╝ ╚══════╝ ╚═════╝ ╚═════╝ ╚═════╝ ╚══════╝╚═╝  ╚═══╝
 ---------------------------------------------------------------
-Narendra, T., Visonà, G., de Jesus Cardona, C., & Schweikert, G. 
-(2022). Multi-condition ChIP-Seq Analysis with DecoDen. bioRxiv.
+Narendra, T., Visonà, G., de Jesus Cardona, C., Abbott, J., & 
+Schweikert, G. (2025). Towards Personalized Epigenomics: Learning
+Shared Chromatin Landscapes and Joint De-Noising of Histone 
+Modification Assays.
 ---------------------------------------------------------------           

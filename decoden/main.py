@@ -96,7 +96,8 @@ def denoise(
                         If you used DecoDen for pre-processing, use the `experiment_conditions.json` file"""),
     control_label: str = typer.Option(
         "control", "--control_label", "-con", help="The label for the control/input samples."),
-
+    genome_size: str = typer.Option(
+        None, "--genome_size", "-gs", help="Size of genome. Give an integer value. Alternatively, `hs` for Homo sapien and `mm` for Mus musculus are also supported."),
     # conditions: List[str] = typer.Option(None, "--conditions", "-c", help="List of experimental conditions. First condition MUST correspond to the control/input samples."),
     out_dir: Optional[Path] = typer.Option(
         None, "--out_dir", "-o", help="Path to directory where all output files will be written"),
@@ -131,7 +132,8 @@ def denoise(
                       n_train_bins=n_train_bins,
                       chunk_size=chunk_size,
                       seed=seed,
-                      plotting=plotting
+                      plotting=plotting,
+                      genome_size=genome_size
                       )
 
     typer.echo("\nDecoDen complete!")

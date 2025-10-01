@@ -1,3 +1,6 @@
+tutorial/.ipynb_checkpoints
+tutorial/toy/
+tutorial/toy.tar.gz
 *.pyc
 .pytest_cache
 .ipynb_checkpoints/
@@ -17,7 +20,7 @@ dist/
 OLD
 predictd
 decoden_output_devel
-
+*.bai
 
 # Created by https://www.toptal.com/developers/gitignore/api/python
 # Edit at https://www.toptal.com/developers/gitignore?templates=python

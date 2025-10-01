@@ -1,32 +1,42 @@
-[tool.poetry]
+[project]
 name = "decoden"
-version = "0.1.0"
+version = "0.1.1"
 description = "Deconvolve and Denoise: remove ChIP-seq biases with a causality-based model"
-authors = ["Giovanni Visona <giovanni.visona@tuebingen.mpg.de>",
-           "Tanmayee Narendra <tanmayee.narendra@uni-tuebingen.de>"]
+authors = [
+    {name = "Tanmayee Narendra",email = "tnarendra001@dundee.ac.uk"},
+    {name = "Giovanni Visona",email = "giovanni.visona@tuebingen.mpg.de"}
+]
+license = {text = "GPL"}
 readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "joblib (>=1.2.0, <2.0.0)",
+    "numpy (>=1.24, <2.0.0)",
+    "pandas (>=2.0.0, <3.0.0)",
+    "tqdm (>=4.66)",
+    "scikit-learn (>=1.5.0,<2.0.0)",
+    "macs2 (>=2.2.6,<3.0.0)",
+    "matplotlib (>=3.7.1,<4.0.0)",
+    "seaborn (>=0.12.2,<0.13.0)",
+    "pyarrow (>=14.0.1,<15.0.0)",
+    "deeptools (>=3.5,<4.0)",
+    "statsmodels (>=0.14,<0.15)",
+    "pysam (>=0.22, <0.23)",
+    "typer (>=0.7, <0.8)"
+]
 
 [tool.poetry.scripts]
 decoden = "decoden.__main__:app"
 
-[tool.poetry.dependencies]
-python = "^3.9"
-joblib = "^1.2.0"
-numpy = "^1.24.2"
-pandas = "^2.0.0"
-tqdm = "^4.65.0"
-scikit-learn = "^1.2.2"
-typer = {extras = ["all"], version = "^0.7.0"}
-MACS2 = "^2.2.6"
-matplotlib = "^3.7.1"
-seaborn = "^0.12.2"
-pyarrow = "^14.0.1"
-deeptools = "^3.5"
-statsmodels = "^0.14"
+[dependency-groups]
+dev = [
+    "pytest (>=7.1,<8.0)"
+]
 
-[tool.poetry.dev-dependencies]
-pytest = "^7.1"
+[project.optional-dependencies]
+all = ["typer"]
+
 
 [build-system]
-requires = ["poetry-core"]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
