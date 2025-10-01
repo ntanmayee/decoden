@@ -17,6 +17,8 @@ dtype_mapping["seqnames"] = str
 dtype_mapping["start"] = int
 dtype_mapping["end"] = int
 
+BIGWIG_FOLDER = 'bw'
+
 def print_message():
     """Print cool opening message when DecoDen is run :) 
     """
@@ -164,6 +166,34 @@ def get_genome_size(genome_size):
         except:
             raise NotImplementedError(f'{genome_size} is unknown. Genome size should be an integer or `hs` (Homo sapien) or `mm` (Mus musculus). Please raise an issue if this is a mistake.')
 
+
+def write_chr(file_handle, chr_name, chr_length, bin_size, values):
+    previous_value = None
+    start = 1
+    end = chr_length
+    line_string = "{}\t{}\t{}\t{:g}\n"
+    
+    for tileIndex, value in enumerate(values):
+        if previous_value is None:
+                writeStart = start + tileIndex * bin_size
+                writeEnd = min(writeStart + bin_size, end)
+                previous_value = value
+
+        elif previous_value == value:
+            writeEnd = min(writeEnd + bin_size, end)
+
+        elif previous_value != value:
+            if not np.isnan(previous_value):
+                file_handle.write(line_string.format(chr_name, writeStart, writeEnd, previous_value))
+            previous_value = value
+            writeStart = writeEnd
+            writeEnd = min(writeStart + bin_size, end)
+
+    # write remaining value if not a nan
+    if previous_value is not None and writeStart != end and not np.isnan(previous_value):
+        file_handle.write(line_string.format(chr_name, writeStart, end, previous_value))
+        
+
 def save_hsr_output(hsr_df, out_dir, replicate_specific=False, files_ref=None):
     print("\nSaving HSR output")
     # label="_replicates" if replicate_specific else "_consolidated"
@@ -175,34 +205,43 @@ def save_hsr_output(hsr_df, out_dir, replicate_specific=False, files_ref=None):
         for v in files_mapping.values():
             label_mapping[(v[0], v[1])] = v[2]
     
-    # comment these two lines to get default behaviour
+    # write to feather file
     hsr_df.reset_index().to_feather(join(out_dir, f"HSR_results.ftr"))
-    return
     
-    bedgraph_dir = join(out_dir, BEDGRAPH_FOLDER)
-    os.makedirs(bedgraph_dir, exist_ok=True)
-    cols = [c for c in hsr_df.columns if c.endswith("HSR Value")]
+    # convert to bedgraph -> bigwig
+    save_dir = join(out_dir, BEDGRAPH_FOLDER)
+    os.makedirs(save_dir, exist_ok=True)
+    save_columns = [c for c in hsr_df.columns if c.endswith("HSR Value")]
     
-    r = lambda: random.randint(0, 255) 
-    for c in tqdm(cols):
-        condition = c.split(" HSR")[0]
-        if replicate_specific:
-            condition, replicate = condition.rsplit("_", 1)
-            replicate = int(replicate)
-        
-        random.seed(condition)
-        color1 = '{},{},{}'.format(r(),r(),r())
-        color2 = '{},{},{}'.format(r(),r(),r())
-        
-        if replicate_specific:
-            label = label_mapping[(condition, replicate)]
-            fname = join(bedgraph_dir, f"{label}_{condition}_DecoDen.bdg")
-        else:
-            fname = join(bedgraph_dir, f"{condition}_DecoDen.bdg")
-        with open(fname, 'w') as f:
-            f.write(f'track type=bedGraph name="{condition}" description="{condition}" visibility=full color={color1} altColor={color2} priority=20\n')
-        bdg_df = hsr_df[[c]].fillna(0.0)
-        bdg_df = compress_bdg_df(bdg_df)
-        bdg_df.to_csv(fname, header=False, sep="\t", mode='a', index=False)
-  
+    # read chrom_sizes, full chr needs to be written for macs
+    chrom_sizes = pd.read_csv(join(out_dir, 'chrom_sizes.bed'), 
+                              sep='\t', names=['chr', 'start', 'end'], index_col=0)
+    chrom_sizes['end_adj'] = chrom_sizes.end - 1
 
+    # get bin size
+    experiment_conditions = json.load(open(join(out_dir, 'outs/experiment_conditions.json')))
+    bin_size = experiment_conditions[list(experiment_conditions.keys())[0]]['bin_size']
+
+    # write to bedgraph
+    for col_name in save_columns:
+        with open(join(save_dir, f'{col_name.replace(" ", "_")}_HSR.bdg'), 'w') as file_handle:
+            start_index = 0
+            for chr_name in tqdm(list(chrom_sizes.index)):
+                chr_length = chrom_sizes.loc[chr_name, 'end_adj']
+                n_bins = int(np.ceil(chr_length/bin_size))
+                values = hsr_results.loc[start_index: start_index+n_bins, col_name]
+                write_chr(file_handle, chr_name, chr_length, bin_size, values)
+
+                start_index += n_bins
+
+
+    # convert all to bigwig
+    for col_name in save_columns:
+        bedgraph_name = join(save_dir, f'{col_name.replace(" ", "_")}_HSR.bdg')
+        bw_name = join(save_dir, f'{col_name.replace(" ", "_")}_decoden.bw')
+        subprocess.run(["bedGraphToBigWig", bedgraph_name, join(out_dir, 'chrom_sizes.bed'), bw_name])
+    
+    # remove all bedgraphs files
+    for col_name in save_columns:
+        bedgraph_name = join(save_dir, f'{col_name.replace(" ", "_")}_HSR.bdg')
+        os.remove(bedgraph_name)
