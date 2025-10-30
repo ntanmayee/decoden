@@ -11,6 +11,8 @@ import random
 from itertools import groupby
 from collections import defaultdict
 from decoden.constants import *
+import subprocess
+
 
 dtype_mapping = defaultdict(lambda: float)
 dtype_mapping["seqnames"] = str
@@ -209,7 +211,7 @@ def save_hsr_output(hsr_df, out_dir, replicate_specific=False, files_ref=None):
     hsr_df.reset_index().to_feather(join(out_dir, f"HSR_results.ftr"))
     
     # convert to bedgraph -> bigwig
-    save_dir = join(out_dir, BEDGRAPH_FOLDER)
+    save_dir = join(out_dir, BIGWIG_FOLDER)
     os.makedirs(save_dir, exist_ok=True)
     save_columns = [c for c in hsr_df.columns if c.endswith("HSR Value")]
     
@@ -229,19 +231,25 @@ def save_hsr_output(hsr_df, out_dir, replicate_specific=False, files_ref=None):
             for chr_name in tqdm(list(chrom_sizes.index)):
                 chr_length = chrom_sizes.loc[chr_name, 'end_adj']
                 n_bins = int(np.ceil(chr_length/bin_size))
-                values = hsr_results.loc[start_index: start_index+n_bins, col_name]
+                values = hsr_df.loc[start_index: start_index+n_bins, col_name]
                 write_chr(file_handle, chr_name, chr_length, bin_size, values)
 
                 start_index += n_bins
+
+    # rewrite chrom_sizes for bigwig
+    chrom_sizes = pd.read_csv(join(out_dir, 'chrom_sizes.bed'), 
+                              sep='\t', names=['chr', 'start', 'end'], index_col=0).drop('start', axis=1)
+    chrom_sizes.to_csv(join(save_dir, 'chrom_sizes_2.bed'), sep='\t', header=False)
 
 
     # convert all to bigwig
     for col_name in save_columns:
         bedgraph_name = join(save_dir, f'{col_name.replace(" ", "_")}_HSR.bdg')
         bw_name = join(save_dir, f'{col_name.replace(" ", "_")}_decoden.bw')
-        subprocess.run(["bedGraphToBigWig", bedgraph_name, join(out_dir, 'chrom_sizes.bed'), bw_name])
+        subprocess.run(["bedGraphToBigWig", bedgraph_name, join(save_dir, 'chrom_sizes_2.bed'), bw_name])
     
     # remove all bedgraphs files
+    os.remove(join(save_dir, 'chrom_sizes_2.bed'))
     for col_name in save_columns:
         bedgraph_name = join(save_dir, f'{col_name.replace(" ", "_")}_HSR.bdg')
         os.remove(bedgraph_name)
