@@ -54,6 +54,9 @@ Run the DecoDen pipeline with default parameters -
 decoden run -i samples.csv -o output_directory -gs genome-size
 ```
 
+### Results
+Results are stored in feather format in `HSR_results.ftr`. For each assay type, a separate `bigwig` file is saved in `bw` directory.
+
 ## Detailed Usage Guidelines
 The following commands are available in DecoDen. Please click on the links to know more about them.
 | Command | Description |
