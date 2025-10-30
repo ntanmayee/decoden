@@ -25,7 +25,7 @@ cd decoden
 # Install the external dependencies and DecoDen
 conda config --add channels bioconda
 conda config --add channels conda-forge
-conda install poetry pysam=0.22 zlib
+conda install poetry pysam=0.22 zlib bioconda::ucsc-bedgraphtobigwig
 
 # If there is no C compiler installed include also the following command
 conda install c-compiler
