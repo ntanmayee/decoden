@@ -210,6 +210,11 @@ def save_hsr_output(hsr_df, out_dir, replicate_specific=False, files_ref=None):
     # write to feather file
     hsr_df.reset_index().to_feather(join(out_dir, f"HSR_results.ftr"))
     
+    # add NMF column
+    hsr_df = hsr_df.reset_index()
+    nmf = pd.read_feather(join(out_dir, 'NMF', 'signal_matrix.ftr'))
+    hsr_df['chromatin_bias HSR Value'] = nmf['tissue_specific']
+    
     # convert to bedgraph -> bigwig
     save_dir = join(out_dir, BIGWIG_FOLDER)
     os.makedirs(save_dir, exist_ok=True)
@@ -221,10 +226,11 @@ def save_hsr_output(hsr_df, out_dir, replicate_specific=False, files_ref=None):
     chrom_sizes['end_adj'] = chrom_sizes.end - 1
 
     # get bin size
-    experiment_conditions = json.load(open(join(out_dir, 'outs/experiment_conditions.json')))
+    experiment_conditions = json.load(open(join(out_dir, 'experiment_conditions.json')))
     bin_size = experiment_conditions[list(experiment_conditions.keys())[0]]['bin_size']
 
     # write to bedgraph
+    logger.info('Writing bedgraph...')
     for col_name in save_columns:
         with open(join(save_dir, f'{col_name.replace(" ", "_")}_HSR.bdg'), 'w') as file_handle:
             start_index = 0
@@ -236,15 +242,22 @@ def save_hsr_output(hsr_df, out_dir, replicate_specific=False, files_ref=None):
 
                 start_index += n_bins
 
+    # sort the bedgraph
+    logger.info('Sorting bedgraph...')
+    for col_name in save_columns:
+        bedgraph_name = join(save_dir, f'{col_name.replace(" ", "_")}_HSR.bdg')
+        sorted_bedgraph_name = join(save_dir, f'{col_name.replace(" ", "_")}_HSR_sorted.bdg')
+        subprocess.run(f'LC_COLLATE=C sort -k1,1 -k2,2n {bedgraph_name} > {sorted_bedgraph_name}', shell=True)
+
     # rewrite chrom_sizes for bigwig
     chrom_sizes = pd.read_csv(join(out_dir, 'chrom_sizes.bed'), 
                               sep='\t', names=['chr', 'start', 'end'], index_col=0).drop('start', axis=1)
     chrom_sizes.to_csv(join(save_dir, 'chrom_sizes_2.bed'), sep='\t', header=False)
 
-
     # convert all to bigwig
+    logger.info('Converting to bigwig...')
     for col_name in save_columns:
-        bedgraph_name = join(save_dir, f'{col_name.replace(" ", "_")}_HSR.bdg')
+        bedgraph_name = join(save_dir, f'{col_name.replace(" ", "_")}_HSR_sorted.bdg')
         bw_name = join(save_dir, f'{col_name.replace(" ", "_")}_decoden.bw')
         subprocess.run(["bedGraphToBigWig", bedgraph_name, join(save_dir, 'chrom_sizes_2.bed'), bw_name])
     
@@ -252,4 +265,6 @@ def save_hsr_output(hsr_df, out_dir, replicate_specific=False, files_ref=None):
     os.remove(join(save_dir, 'chrom_sizes_2.bed'))
     for col_name in save_columns:
         bedgraph_name = join(save_dir, f'{col_name.replace(" ", "_")}_HSR.bdg')
+        sorted_bedgraph_name = join(save_dir, f'{col_name.replace(" ", "_")}_HSR_sorted.bdg')
         os.remove(bedgraph_name)
+        os.remove(sorted_bedgraph_name)
